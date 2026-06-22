@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= title %> | Stylezee Imagens</title>
+  <link rel="stylesheet" href="/assets/styles.css">
+</head>
+<body class="login-body">
+  <main class="login-panel">
+    <div class="login-brand">
+      <span class="brand-mark">S</span>
+      <div>
+        <strong>Stylezee</strong>
+        <small>Repositório de imagens</small>
+      </div>
+    </div>
+    <form class="form-panel" action="/admin/login" method="post">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <% if (typeof error !== 'undefined') { %>
+        <div class="flash error"><%= error %></div>
+      <% } %>
+      <label>
+        Usuário
+        <input name="username" autocomplete="username" required>
+      </label>
+      <label>
+        Senha
+        <input name="password" type="password" autocomplete="current-password" required>
+      </label>
+      <button class="primary-button full" type="submit">Entrar</button>
+    </form>
+  </main>
+</body>
+</html>

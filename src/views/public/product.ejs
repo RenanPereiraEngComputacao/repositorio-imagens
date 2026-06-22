@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= title %> | Stylezee</title>
+  <link rel="stylesheet" href="/assets/styles.css">
+</head>
+<body class="public-body">
+  <main class="product-public">
+    <header class="public-header">
+      <div class="brand-line">
+        <span class="brand-mark">S</span>
+        <strong>Stylezee</strong>
+      </div>
+      <p><%= product.collection_name %></p>
+      <h1><%= product.reference %></h1>
+      <% if (product.name) { %>
+        <h2><%= product.name %></h2>
+      <% } %>
+      <% if (product.description) { %>
+        <p class="public-description"><%= product.description %></p>
+      <% } %>
+    </header>
+
+    <% if (images.length > 0) { %>
+      <section class="public-gallery">
+        <% images.forEach((image, index) => { %>
+          <button class="public-image <%= index === 0 ? 'featured' : '' %>" type="button" data-lightbox="<%= image.file_url %>">
+            <img src="<%= image.file_url %>" alt="Imagem <%= index + 1 %> da referência <%= product.reference %>" loading="<%= index === 0 ? 'eager' : 'lazy' %>">
+          </button>
+        <% }) %>
+      </section>
+    <% } else { %>
+      <section class="not-found-public compact">
+        <h2>Imagens não encontradas para esta referência.</h2>
+      </section>
+    <% } %>
+  </main>
+  <div class="lightbox" data-lightbox-panel hidden>
+    <button type="button" data-lightbox-close aria-label="Fechar">×</button>
+    <img alt="Imagem em tela cheia">
+  </div>
+  <script src="/assets/public.js"></script>
+</body>
+</html>

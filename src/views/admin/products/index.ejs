@@ -1,0 +1,44 @@
+<%- include('../../partials/admin-head', { title, page: 'products' }) %>
+<section class="action-row">
+  <form class="search-form" method="get" action="/admin/products">
+    <input name="reference" value="<%= search %>" placeholder="Buscar referência">
+    <button class="secondary-button" type="submit">Buscar</button>
+  </form>
+  <a class="primary-button" href="/admin/products/new">Novo produto</a>
+</section>
+
+<section class="panel">
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Referência</th>
+          <th>Produto</th>
+          <th>Coleção</th>
+          <th>Imagens</th>
+          <th>Status</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% products.forEach((product) => { %>
+          <tr>
+            <td><a href="/admin/products/<%= product.id %>/images"><strong><%= product.reference %></strong></a></td>
+            <td><%= product.name || '-' %></td>
+            <td><%= product.collection_name %></td>
+            <td><%= product.images_count %></td>
+            <td><span class="status <%= product.active ? 'on' : 'off' %>"><%= product.active ? 'Ativo' : 'Inativo' %></span></td>
+            <td class="table-actions">
+              <a href="/admin/products/<%= product.id %>/edit">Editar</a>
+              <a href="/imagens/<%= product.reference %>" target="_blank" rel="noreferrer">Ver</a>
+            </td>
+          </tr>
+        <% }) %>
+        <% if (products.length === 0) { %>
+          <tr><td colspan="6">Nenhum produto encontrado.</td></tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</section>
+<%- include('../../partials/admin-footer') %>

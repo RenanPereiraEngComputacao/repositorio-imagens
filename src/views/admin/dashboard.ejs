@@ -1,0 +1,67 @@
+<%- include('../partials/admin-head', { title, page: 'dashboard' }) %>
+<section class="stats-grid">
+  <article class="stat-card">
+    <span>Coleções</span>
+    <strong><%= stats.collections %></strong>
+  </article>
+  <article class="stat-card accent-teal">
+    <span>Produtos</span>
+    <strong><%= stats.products %></strong>
+  </article>
+  <article class="stat-card accent-orange">
+    <span>Imagens</span>
+    <strong><%= stats.images %></strong>
+  </article>
+</section>
+
+<section class="split-grid">
+  <div class="panel">
+    <div class="panel-heading">
+      <h2>Produtos recentes</h2>
+      <a href="/admin/products">Ver todos</a>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Referência</th>
+            <th>Produto</th>
+            <th>Coleção</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% recentProducts.forEach((product) => { %>
+            <tr>
+              <td><a href="/admin/products/<%= product.id %>/images"><%= product.reference %></a></td>
+              <td><%= product.name || '-' %></td>
+              <td><%= product.collection_name %></td>
+              <td><span class="status <%= product.active ? 'on' : 'off' %>"><%= product.active ? 'Ativo' : 'Inativo' %></span></td>
+            </tr>
+          <% }) %>
+          <% if (recentProducts.length === 0) { %>
+            <tr><td colspan="4">Nenhum produto cadastrado.</td></tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-heading">
+      <h2>Últimas imagens</h2>
+      <a href="/admin/upload">Upload</a>
+    </div>
+    <div class="thumb-strip">
+      <% recentImages.forEach((image) => { %>
+        <a href="/imagens/<%= image.reference %>" target="_blank" rel="noreferrer">
+          <img src="<%= image.file_url %>" alt="Imagem da referência <%= image.reference %>">
+        </a>
+      <% }) %>
+      <% if (recentImages.length === 0) { %>
+        <p>Nenhuma imagem importada.</p>
+      <% } %>
+    </div>
+  </div>
+</section>
+<%- include('../partials/admin-footer') %>

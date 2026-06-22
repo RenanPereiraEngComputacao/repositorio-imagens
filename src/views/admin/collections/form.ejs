@@ -1,0 +1,26 @@
+<%- include('../../partials/admin-head', { title, page: 'collections' }) %>
+<section class="panel narrow">
+  <% if (typeof error !== 'undefined') { %>
+    <div class="flash error"><%= error %></div>
+  <% } %>
+  <form class="stacked-form" action="<%= action %>" method="post">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <label>
+      Nome da coleção
+      <input name="name" value="<%= collection.name || '' %>" placeholder="INVERNO 2026" required>
+    </label>
+    <label>
+      Slug/pasta
+      <input name="slug" value="<%= collection.slug || '' %>" placeholder="inverno-2026">
+    </label>
+    <label class="switch-row">
+      <input type="checkbox" name="active" <%= collection.active ? 'checked' : '' %>>
+      <span>Ativa</span>
+    </label>
+    <div class="form-actions">
+      <a class="ghost-button" href="/admin/collections">Cancelar</a>
+      <button class="primary-button" type="submit">Salvar</button>
+    </div>
+  </form>
+</section>
+<%- include('../../partials/admin-footer') %>

@@ -1,0 +1,35 @@
+<%- include('../../partials/admin-head', { title, page: 'collections' }) %>
+<section class="action-row">
+  <a class="primary-button" href="/admin/collections/new">Nova coleção</a>
+</section>
+
+<section class="panel">
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>Slug</th>
+          <th>Produtos</th>
+          <th>Status</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% collections.forEach((collection) => { %>
+          <tr>
+            <td><strong><%= collection.name %></strong></td>
+            <td><code><%= collection.slug %></code></td>
+            <td><%= collection.products_count %></td>
+            <td><span class="status <%= collection.active ? 'on' : 'off' %>"><%= collection.active ? 'Ativa' : 'Inativa' %></span></td>
+            <td class="table-actions"><a href="/admin/collections/<%= collection.id %>/edit">Editar</a></td>
+          </tr>
+        <% }) %>
+        <% if (collections.length === 0) { %>
+          <tr><td colspan="5">Nenhuma coleção cadastrada.</td></tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</section>
+<%- include('../../partials/admin-footer') %>

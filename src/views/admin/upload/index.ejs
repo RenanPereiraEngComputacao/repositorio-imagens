@@ -1,0 +1,66 @@
+<%- include('../../partials/admin-head', { title, page: 'upload' }) %>
+<section class="split-grid">
+  <div class="panel">
+    <div class="panel-heading">
+      <h2>Buscar referência</h2>
+      <a href="/admin/products/new">Novo produto</a>
+    </div>
+    <form class="search-form wide" method="get" action="/admin/upload">
+      <input name="reference" value="<%= search %>" placeholder="217.0010VT">
+      <button class="secondary-button" type="submit">Buscar</button>
+    </form>
+
+    <% if (products.length > 0) { %>
+      <div class="result-list">
+        <% products.forEach((product) => { %>
+          <a class="result-item" href="/admin/products/<%= product.id %>/images">
+            <span>
+              <strong><%= product.reference %></strong>
+              <small><%= product.name || product.collection_name %></small>
+            </span>
+            <em><%= product.images_count %> imagens</em>
+          </a>
+        <% }) %>
+      </div>
+    <% } else if (search) { %>
+      <div class="empty-inline">
+        <p>Nenhum produto encontrado.</p>
+        <a href="/admin/products/new?reference=<%= encodeURIComponent(search) %>">Cadastrar referência</a>
+      </div>
+    <% } %>
+  </div>
+
+  <div class="panel">
+    <div class="panel-heading">
+      <h2>Importação em massa</h2>
+    </div>
+    <% if (bulkResult) { %>
+      <div class="flash success"><%= bulkResult.imported %> imagem(ns) importada(s). <%= bulkResult.ignored %> ignorada(s).</div>
+      <% if (bulkResult.missing.length > 0) { %>
+        <div class="missing-list">
+          <% bulkResult.missing.slice(0, 20).forEach((reference) => { %>
+            <code><%= reference %></code>
+          <% }) %>
+        </div>
+      <% } %>
+    <% } %>
+    <form class="stacked-form" action="/admin/upload/bulk?_csrf=<%= csrfToken %>" method="post" enctype="multipart/form-data">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <label>
+        Separador da referência
+        <select name="separator">
+          <option value="_">_</option>
+          <option value="-">-</option>
+          <option value="space">espaço</option>
+          <option value="full">nome completo</option>
+        </select>
+      </label>
+      <label class="file-drop">
+        <input type="file" name="images" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" multiple>
+        <span>Selecionar imagens</span>
+      </label>
+      <button class="primary-button" type="submit">Importar</button>
+    </form>
+  </div>
+</section>
+<%- include('../../partials/admin-footer') %>

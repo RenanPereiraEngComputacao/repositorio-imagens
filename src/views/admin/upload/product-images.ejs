@@ -1,0 +1,62 @@
+<%- include('../../partials/admin-head', { title, page: 'upload' }) %>
+<section class="product-bar">
+  <div>
+    <p class="eyebrow"><%= product.collection_name %></p>
+    <h2><%= product.reference %></h2>
+    <% if (product.name) { %><span><%= product.name %></span><% } %>
+  </div>
+  <a class="secondary-button" href="/imagens/<%= product.reference %>" target="_blank" rel="noreferrer">Ver página pública</a>
+</section>
+
+<section class="panel upload-panel">
+  <form class="upload-form" action="/admin/products/<%= product.id %>/images?_csrf=<%= csrfToken %>" method="post" enctype="multipart/form-data">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <label class="file-drop">
+      <input type="file" name="images" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" multiple>
+      <span>Selecionar imagens</span>
+    </label>
+    <button class="primary-button" type="submit">Enviar imagens</button>
+  </form>
+</section>
+
+<section class="panel">
+  <div class="panel-heading">
+    <h2>Galeria</h2>
+    <% if (images.length > 1) { %>
+      <form action="/admin/products/<%= product.id %>/images/reorder" method="post" data-order-form>
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <input type="hidden" name="image_order" value="<%= images.map((image) => image.id).join(',') %>" data-order-input>
+        <button class="secondary-button" type="submit">Salvar ordem</button>
+      </form>
+    <% } %>
+  </div>
+
+  <div class="admin-gallery" data-sortable-images>
+    <% images.forEach((image) => { %>
+      <article class="admin-image-card" draggable="true" data-image-id="<%= image.id %>">
+        <img src="<%= image.file_url %>" alt="Imagem cadastrada">
+        <div class="image-card-footer">
+          <span class="status <%= image.is_main ? 'on' : '' %>"><%= image.is_main ? 'Principal' : 'Imagem' %></span>
+          <div>
+            <% if (!image.is_main) { %>
+              <form action="/admin/products/<%= product.id %>/images/<%= image.id %>/main" method="post">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <button class="link-button" type="submit">Principal</button>
+              </form>
+            <% } %>
+            <form action="/admin/products/<%= product.id %>/images/<%= image.id %>/delete" method="post" data-confirm="Excluir imagem?">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button class="link-button danger" type="submit">Excluir</button>
+            </form>
+          </div>
+        </div>
+      </article>
+    <% }) %>
+    <% if (images.length === 0) { %>
+      <div class="empty-state compact">
+        <h2>Nenhuma imagem cadastrada</h2>
+      </div>
+    <% } %>
+  </div>
+</section>
+<%- include('../../partials/admin-footer') %>

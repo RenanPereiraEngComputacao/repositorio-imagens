@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= title %> | Stylezee Imagens</title>
+  <link rel="stylesheet" href="/assets/styles.css">
+</head>
+<body class="admin-body">
+  <aside class="sidebar">
+    <a class="brand" href="/admin/dashboard">
+      <span class="brand-mark">S</span>
+      <span>
+        <strong>Stylezee</strong>
+        <small>Imagens</small>
+      </span>
+    </a>
+    <nav class="side-nav" aria-label="Menu administrativo">
+      <a class="<%= page === 'dashboard' ? 'active' : '' %>" href="/admin/dashboard"><span>Dashboard</span></a>
+      <a class="<%= page === 'collections' ? 'active' : '' %>" href="/admin/collections"><span>Coleções</span></a>
+      <a class="<%= page === 'products' ? 'active' : '' %>" href="/admin/products"><span>Produtos</span></a>
+      <a class="<%= page === 'upload' ? 'active' : '' %>" href="/admin/upload"><span>Upload de Imagens</span></a>
+    </nav>
+    <form class="logout-form" action="/admin/logout" method="post">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <button class="ghost-button" type="submit">Sair</button>
+    </form>
+  </aside>
+  <main class="admin-main">
+    <header class="admin-topbar">
+      <div>
+        <p class="eyebrow">Painel administrativo</p>
+        <h1><%= title %></h1>
+      </div>
+    </header>
+    <% if (flash) { %>
+      <div class="flash <%= flash.type %>"><%= flash.message %></div>
+    <% } %>

@@ -1,0 +1,41 @@
+<%- include('../../partials/admin-head', { title, page: 'products' }) %>
+<section class="panel narrow">
+  <% if (typeof error !== 'undefined') { %>
+    <div class="flash error"><%= error %></div>
+  <% } %>
+  <form class="stacked-form" action="<%= action %>" method="post">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <label>
+      Referência
+      <input name="reference" value="<%= product.reference || '' %>" placeholder="217.0010VT" required>
+    </label>
+    <label>
+      Nome do produto
+      <input name="name" value="<%= product.name || '' %>">
+    </label>
+    <label>
+      Descrição
+      <textarea name="description" rows="4"><%= product.description || '' %></textarea>
+    </label>
+    <label>
+      Coleção
+      <select name="collection_id" required>
+        <option value="">Selecione</option>
+        <% collections.forEach((collection) => { %>
+          <option value="<%= collection.id %>" <%= String(product.collection_id || '') === String(collection.id) ? 'selected' : '' %>>
+            <%= collection.name %> <%= collection.active ? '' : '(inativa)' %>
+          </option>
+        <% }) %>
+      </select>
+    </label>
+    <label class="switch-row">
+      <input type="checkbox" name="active" <%= product.active ? 'checked' : '' %>>
+      <span>Ativo</span>
+    </label>
+    <div class="form-actions">
+      <a class="ghost-button" href="/admin/products">Cancelar</a>
+      <button class="primary-button" type="submit">Salvar</button>
+    </div>
+  </form>
+</section>
+<%- include('../../partials/admin-footer') %>
