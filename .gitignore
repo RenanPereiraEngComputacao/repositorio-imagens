@@ -1,0 +1,8 @@
+node_modules/
+.env
+.tmp/
+.repo-git/
+npm-debug.log*
+
+public/imagens/*
+!public/imagens/.gitkeep
