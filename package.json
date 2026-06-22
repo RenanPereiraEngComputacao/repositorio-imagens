@@ -1,0 +1,27 @@
+{
+  "name": "stylezee-repositorio-imagens",
+  "version": "1.0.0",
+  "description": "Repositório web de imagens de produtos acessadas por referência via QR Code.",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "db:migrate": "psql \"$DATABASE_URL\" -f db/schema.sql",
+    "admin:hash": "node scripts/create-admin-hash.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "connect-pg-simple": "^10.0.0",
+    "dotenv": "^16.4.7",
+    "ejs": "^3.1.10",
+    "express": "^4.21.2",
+    "express-session": "^1.18.1",
+    "helmet": "^8.0.0",
+    "multer": "^1.4.5-lts.1",
+    "pg": "^8.13.1",
+    "sharp": "^0.33.5"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
