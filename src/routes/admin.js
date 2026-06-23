@@ -24,10 +24,24 @@ const {
   safeSegment
 } = require('../utils/text');
 
+const multer = require("multer");
+const XLSX = require("xlsx");
+
 const router = express.Router();
 
 router.use(pullFlash);
-router.use(csrfProtection);
+
+router.use((req, res, next) => {
+  if (req.method === "POST" && req.path === "/products/import") {
+    res.locals.csrfToken = "";
+    return next();
+  }
+
+  return csrfProtection(req, res, next);
+});
+
+
+const upload = multer({ dest: "uploads/" });
 
 function activeFromBody(body) {
   return body.active === 'on' || body.active === 'true';
@@ -424,6 +438,70 @@ router.post('/products', async (req, res, next) => {
       }, 'Já existe um produto com esta referência.');
     }
 
+    next(error);
+  }
+});
+
+router.get("/products/import", async (req, res, next) => {
+  try {
+    res.render("admin/products/import", {
+      title: "Importar produtos",
+      collections: await getCollections()
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/products/import", upload.single("file"), async (req, res, next) => {
+  try {
+    if (!req.file) {
+      setFlash(req, "error", "Selecione uma planilha XLSX.");
+      return res.redirect("/admin/products/import");
+    }
+
+    const workbook = XLSX.readFile(req.file.path);
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+
+    let imported = 0;
+    let ignored = 0;
+
+    for (const row of rows) {
+      const reference = cleanReference(String(row.reference || "").trim());
+      const name = String(row.name || "").trim();
+      const description = String(row.description || "").trim();
+      const collectionId = Number(row.collection_id);
+      const activeValue = String(row.active || "true").toLowerCase().trim();
+      const active = ["true", "sim", "1", "yes"].includes(activeValue);
+
+      if (!reference || !collectionId) {
+        ignored++;
+        continue;
+      }
+
+      await query(
+        `
+        INSERT INTO products
+          (reference, name, description, collection_id, active)
+        VALUES ($1, NULLIF($2, ''), NULLIF($3, ''), $4, $5)
+        ON CONFLICT (reference) DO UPDATE SET
+          name = EXCLUDED.name,
+          description = EXCLUDED.description,
+          collection_id = EXCLUDED.collection_id,
+          active = EXCLUDED.active
+        `,
+        [reference, name, description, collectionId, active]
+      );
+
+      imported++;
+    }
+
+    await fs.unlink(req.file.path);
+
+    setFlash(req, "success", `Importação concluída. ${imported} importados, ${ignored} ignorados.`);
+    res.redirect("/admin/products");
+  } catch (error) {
     next(error);
   }
 });

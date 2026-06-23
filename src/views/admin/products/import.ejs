@@ -1,0 +1,96 @@
+<%- include('../../partials/admin-head', { title, page: 'products' }) %>
+
+<section class="action-row">
+  <a class="ghost-button" href="/admin/products">← Voltar para produtos</a>
+</section>
+
+<section class="panel narrow">
+  <% if (typeof error !== 'undefined') { %>
+    <div class="flash error"><%= error %></div>
+  <% } %>
+
+  <div class="import-card">
+    <div class="import-icon">XLSX</div>
+    <div>
+      <h2>Importar produtos por planilha</h2>
+      <p>
+        Envie uma planilha <strong>.xlsx</strong> com as referências dos produtos.
+        Referências já cadastradas serão atualizadas automaticamente.
+      </p>
+    </div>
+  </div>
+
+  <div class="info-box">
+    <strong>Colunas obrigatórias:</strong>
+    <p style="margin: 8px 0 14px;">
+      Use exatamente estes nomes na primeira linha da planilha:
+    </p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>reference</th>
+            <th>name</th>
+            <th>description</th>
+            <th>collection_id</th>
+            <th>active</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>117.0002BL</td>
+            <td>BLUSA JEANS COM LAÇOS APLICADOS</td>
+            <td>AZUL</td>
+            <td>1</td>
+            <td>true</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <% if (typeof collections !== 'undefined' && collections.length > 0) { %>
+    <div class="info-box">
+      <strong>IDs das coleções disponíveis:</strong>
+      <div class="table-wrap" style="margin-top: 12px;">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Coleção</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% collections.forEach((collection) => { %>
+              <tr>
+                <td><%= collection.id %></td>
+                <td><%= collection.name %></td>
+                <td>
+                  <span class="status <%= collection.active ? 'on' : 'off' %>">
+                    <%= collection.active ? 'Ativa' : 'Inativa' %>
+                  </span>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  <% } %>
+
+  <form class="stacked-form" action="/admin/products/import" method="post" enctype="multipart/form-data">
+    <label>
+      Selecione a planilha XLSX
+      <input type="file" name="file" accept=".xlsx" required>
+    </label>
+
+    <div class="form-actions">
+      <a class="ghost-button" href="/admin/products">Cancelar</a>
+      <button class="primary-button" type="submit">Importar planilha</button>
+    </div>
+  </form>
+</section>
+
+<%- include('../../partials/admin-footer') %>
