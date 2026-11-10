@@ -1,96 +1,91 @@
-<%- include('../../partials/admin-head', { title, page: 'products' }) %>
+<%- include('../../partials/admin/start') %>
+<header class="page-head">
+  <div>
+    <a class="back-link" href="/admin/products"><%- icon('arrow-left') %> Produtos</a>
+    <h1><%= title %></h1>
+  </div>
+</header>
 
-<section class="action-row">
-  <a class="ghost-button" href="/admin/products">← Voltar para produtos</a>
-</section>
+<div class="split">
+  <div class="stack">
+    <% if (report) { %>
+      <section class="card">
+        <div class="card-head"><h2><%= report.simulate ? 'Resultado da simulação' : 'Importação concluída' %></h2></div>
+        <div class="card-body stack">
+          <div class="impact">
+            <div><span class="eyebrow">Novos</span><strong><%= report.created %></strong></div>
+            <div><span class="eyebrow">Atualizados</span><strong><%= report.updated %></strong></div>
+            <div><span class="eyebrow">Avisos</span><strong><%= report.errorsCount %></strong></div>
+          </div>
+          <% if (report.simulate) { %>
+            <div class="alert alert-info"><%- icon('alert') %><div>Nada foi gravado. Desmarque “Apenas simular” e envie novamente para aplicar.</div></div>
+          <% } %>
+          <% if (report.errors.length) { %>
+            <div class="table-wrap">
+              <table class="table">
+                <thead><tr><th class="num">Linha</th><th>Referência</th><th>Aviso</th></tr></thead>
+                <tbody>
+                  <% report.errors.forEach((item) => { %>
+                    <tr><td class="num"><%= item.line %></td><td><code><%= item.reference || '—' %></code></td><td><%= item.error %></td></tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            </div>
+          <% } %>
+        </div>
+      </section>
+    <% } %>
 
-<section class="panel narrow">
-  <% if (typeof error !== 'undefined') { %>
-    <div class="flash error"><%= error %></div>
-  <% } %>
-
-  <div class="import-card">
-    <div class="import-icon">XLSX</div>
-    <div>
-      <h2>Importar produtos por planilha</h2>
-      <p>
-        Envie uma planilha <strong>.xlsx</strong> com as referências dos produtos.
-        Referências já cadastradas serão atualizadas automaticamente.
-      </p>
-    </div>
+    <section class="card">
+      <div class="card-head"><h2>Enviar planilha</h2></div>
+      <form class="card-body form-stack" action="/admin/products/import?_csrf=<%= csrfToken %>" method="post" enctype="multipart/form-data">
+        <label class="dropzone" data-dropzone>
+          <input type="file" name="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required data-file-label>
+          <%- icon('sheet') %>
+          <span class="dropzone-title" data-file-name>Selecione a planilha .xlsx</span>
+          <span class="dropzone-hint">Até 5 MB · primeira aba · até 5.000 linhas</span>
+        </label>
+        <label class="check"><input type="checkbox" name="simulate" checked> <span>Apenas simular (mostra o resultado sem gravar)</span></label>
+        <div class="form-actions">
+          <button class="btn btn-primary" type="submit"><%- icon('upload') %> Processar planilha</button>
+        </div>
+      </form>
+    </section>
   </div>
 
-  <div class="info-box">
-    <strong>Colunas obrigatórias:</strong>
-    <p style="margin: 8px 0 14px;">
-      Use exatamente estes nomes na primeira linha da planilha:
-    </p>
-
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>reference</th>
-            <th>name</th>
-            <th>description</th>
-            <th>collection_id</th>
-            <th>active</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>117.0002BL</td>
-            <td>BLUSA JEANS COM LAÇOS APLICADOS</td>
-            <td>AZUL</td>
-            <td>1</td>
-            <td>true</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <% if (typeof collections !== 'undefined' && collections.length > 0) { %>
-    <div class="info-box">
-      <strong>IDs das coleções disponíveis:</strong>
-      <div class="table-wrap" style="margin-top: 12px;">
-        <table>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Coleção</th>
-              <th>Status</th>
-            </tr>
-          </thead>
+  <div class="stack">
+    <section class="card">
+      <div class="card-head"><h2>Formato aceito</h2></div>
+      <div class="card-body stack">
+        <p class="muted small">Referências já cadastradas são atualizadas; as novas são criadas. Campos vazios não apagam dados existentes.</p>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Coluna</th><th>Também aceita</th></tr></thead>
+            <tbody>
+              <tr><td><code>reference</code></td><td class="small">REFERENCIA_PRODUTO, referencia</td></tr>
+              <tr><td><code>name</code></td><td class="small">DESCRICAO_PRODUTO, nome</td></tr>
+              <tr><td><code>description</code></td><td class="small">CORES, descricao</td></tr>
+              <tr><td><code>collection_id</code></td><td class="small">ou <code>COLECAO_PRODUTO</code> (nome/slug)</td></tr>
+              <tr><td><code>active</code></td><td class="small">true/false, sim/não (padrão: ativo)</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+    <section class="card">
+      <div class="card-head"><h2>Coleções</h2></div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th class="num">ID</th><th>Nome</th><th>Status</th></tr></thead>
           <tbody>
             <% collections.forEach((collection) => { %>
-              <tr>
-                <td><%= collection.id %></td>
-                <td><%= collection.name %></td>
-                <td>
-                  <span class="status <%= collection.active ? 'on' : 'off' %>">
-                    <%= collection.active ? 'Ativa' : 'Inativa' %>
-                  </span>
-                </td>
-              </tr>
+              <tr><td class="num"><%= collection.id %></td><td><%= collection.name %></td><td><span class="badge <%= collection.active ? 'badge-on' : 'badge-off' %>"><%= collection.active ? 'Ativa' : 'Inativa' %></span></td></tr>
             <% }) %>
+            <% if (!collections.length) { %><tr><td colspan="3" class="muted">Cadastre uma coleção antes de importar.</td></tr><% } %>
           </tbody>
         </table>
       </div>
-    </div>
-  <% } %>
-
-  <form class="stacked-form" action="/admin/products/import" method="post" enctype="multipart/form-data">
-    <label>
-      Selecione a planilha XLSX
-      <input type="file" name="file" accept=".xlsx" required>
-    </label>
-
-    <div class="form-actions">
-      <a class="ghost-button" href="/admin/products">Cancelar</a>
-      <button class="primary-button" type="submit">Importar planilha</button>
-    </div>
-  </form>
-</section>
-
-<%- include('../../partials/admin-footer') %>
+    </section>
+  </div>
+</div>
+<%- include('../../partials/admin/end') %>

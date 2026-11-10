@@ -2,75 +2,89 @@ const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const config = require('../config');
 
-function ensureAuthenticated(req, res, next) {
-  if (req.session && req.session.admin) {
-    return next();
-  }
+function wantsJson(req) {
+  return req.xhr || String(req.get('accept') || '').includes('application/json');
+}
 
+function ensureAuthenticated(req, res, next) {
+  if (req.session && req.session.admin) return next();
+  if (wantsJson(req)) {
+    return res.status(401).json({ ok: false, error: 'Sessão expirada. Entre novamente.' });
+  }
+  if (req.method === 'GET') req.session.returnTo = req.originalUrl;
   return res.redirect('/admin/login');
 }
 
-function setFlash(req, type, message) {
-  req.session.flash = { type, message };
-}
-
-function pullFlash(req, res, next) {
-  res.locals.flash = req.session.flash || null;
-  delete req.session.flash;
-  next();
-}
-
 function safeCompare(a, b) {
-  const left = Buffer.from(String(a));
-  const right = Buffer.from(String(b));
-
-  if (left.length !== right.length) return false;
-  return crypto.timingSafeEqual(left, right);
+  const left = crypto.createHash('sha256').update(String(a)).digest();
+  const right = crypto.createHash('sha256').update(String(b)).digest();
+  return crypto.timingSafeEqual(left, right) && String(a).length === String(b).length;
 }
 
 async function verifyAdminCredentials(username, password) {
-  if (!safeCompare(username, config.admin.username)) {
-    return false;
-  }
+  const userOk = safeCompare(username, config.admin.username);
 
   if (config.admin.passwordHash) {
-    return bcrypt.compare(password, config.admin.passwordHash);
+    // Executa o bcrypt mesmo com usuário errado para não revelar quais usuários existem pelo tempo de resposta.
+    const passwordOk = await bcrypt.compare(password, config.admin.passwordHash);
+    return userOk && passwordOk;
   }
 
   if (config.admin.password) {
-    return safeCompare(password, config.admin.password);
+    return userOk && safeCompare(password, config.admin.password);
   }
 
   return false;
 }
 
-function csrfProtection(req, res, next) {
-  if (!req.session.csrfToken) {
-    req.session.csrfToken = crypto.randomBytes(32).toString('hex');
+/* Limite simples de tentativas de login por IP (memória do processo). */
+const attempts = new Map();
+
+function loginKey(req) {
+  return String(req.ip || 'unknown');
+}
+
+function loginRateLimit(req, res, next) {
+  const key = loginKey(req);
+  const now = Date.now();
+  const windowMs = config.loginWindowMinutes * 60 * 1000;
+  const entry = attempts.get(key);
+
+  if (entry && now - entry.first > windowMs) attempts.delete(key);
+  const current = attempts.get(key);
+
+  if (current && current.count >= config.loginMaxAttempts) {
+    const minutes = Math.ceil((current.first + windowMs - now) / 60000);
+    return res.status(429).render('admin/login', {
+      title: 'Entrar',
+      error: `Muitas tentativas. Aguarde ${minutes} minuto(s) e tente novamente.`
+    });
   }
+  return next();
+}
 
-  res.locals.csrfToken = req.session.csrfToken;
+function registerLoginFailure(req) {
+  const key = loginKey(req);
+  const entry = attempts.get(key) || { count: 0, first: Date.now() };
+  entry.count += 1;
+  attempts.set(key, entry);
+}
 
-  if (req.method === 'GET' || req.method === 'HEAD' || req.method === 'OPTIONS') {
-    return next();
-  }
+function clearLoginFailures(req) {
+  attempts.delete(loginKey(req));
+}
 
-  const token = req.body?._csrf || req.query?._csrf || req.headers['x-csrf-token'];
-
-  if (token && safeCompare(token, req.session.csrfToken)) {
-    return next();
-  }
-
-  return res.status(403).render('admin/error', {
-    title: 'Acesso bloqueado',
-    message: 'A sessão expirou. Atualize a página e tente novamente.'
-  });
+function resetLoginAttempts() {
+  attempts.clear();
 }
 
 module.exports = {
+  wantsJson,
   ensureAuthenticated,
   verifyAdminCredentials,
-  setFlash,
-  pullFlash,
-  csrfProtection
+  safeCompare,
+  loginRateLimit,
+  registerLoginFailure,
+  clearLoginFailures,
+  resetLoginAttempts
 };

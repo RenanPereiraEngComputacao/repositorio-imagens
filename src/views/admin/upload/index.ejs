@@ -1,66 +1,86 @@
-<%- include('../../partials/admin-head', { title, page: 'upload' }) %>
-<section class="split-grid">
-  <div class="panel">
-    <div class="panel-heading">
-      <h2>Buscar referência</h2>
-      <a href="/admin/products/new">Novo produto</a>
-    </div>
-    <form class="search-form wide" method="get" action="/admin/upload">
-      <input name="reference" value="<%= search %>" placeholder="217.0010VT">
-      <button class="secondary-button" type="submit">Buscar</button>
-    </form>
-
-    <% if (products.length > 0) { %>
-      <div class="result-list">
-        <% products.forEach((product) => { %>
-          <a class="result-item" href="/admin/products/<%= product.id %>/images">
-            <span>
-              <strong><%= product.reference %></strong>
-              <small><%= product.name || product.collection_name %></small>
-            </span>
-            <em><%= product.images_count %> imagens</em>
-          </a>
-        <% }) %>
-      </div>
-    <% } else if (search) { %>
-      <div class="empty-inline">
-        <p>Nenhum produto encontrado.</p>
-        <a href="/admin/products/new?reference=<%= encodeURIComponent(search) %>">Cadastrar referência</a>
-      </div>
-    <% } %>
+<%- include('../../partials/admin/start') %>
+<header class="page-head">
+  <div>
+    <p class="eyebrow">Imagens</p>
+    <h1><%= title %></h1>
   </div>
+</header>
 
-  <div class="panel">
-    <div class="panel-heading">
-      <h2>Importação em massa</h2>
-    </div>
-    <% if (bulkResult) { %>
-      <div class="flash success"><%= bulkResult.imported %> imagem(ns) importada(s). <%= bulkResult.ignored %> ignorada(s).</div>
-      <% if (bulkResult.missing.length > 0) { %>
-        <div class="missing-list">
-          <% bulkResult.missing.slice(0, 20).forEach((reference) => { %>
-            <code><%= reference %></code>
+<div class="split split-even">
+  <section class="card">
+    <div class="card-head"><h2>Por referência</h2><a href="/admin/products/new">Novo produto</a></div>
+    <div class="card-body stack">
+      <form class="toolbar" method="get" action="/admin/upload" role="search">
+        <label class="search-input">
+          <span class="sr-only">Referência</span>
+          <%- icon('search') %>
+          <input class="input input-mono" type="search" name="reference" value="<%= search %>" placeholder="217.0010VT" autofocus>
+        </label>
+        <button class="btn btn-secondary" type="submit">Buscar</button>
+      </form>
+
+      <% if (products.length) { %>
+        <ul class="list-plain">
+          <% products.forEach((product) => { %>
+            <li>
+              <a class="cell-title" href="/admin/products/<%= product.id %>/images">
+                <% if (product.file_url) { %><img class="table-thumb" src="<%= thumbUrl(product) %>" alt="" loading="lazy"><% } else { %><span class="table-thumb table-thumb-empty"><%- icon('image') %></span><% } %>
+                <span><strong><%= product.reference %></strong><span class="cell-sub"><%= product.name || product.collection_name %></span></span>
+              </a>
+              <span class="small muted nowrap"><%= plural(product.images_count, 'imagem', 'imagens') %></span>
+            </li>
           <% }) %>
+        </ul>
+      <% } else if (search) { %>
+        <div class="empty empty-sm">
+          <%- icon('search') %>
+          <p>Nenhum produto com “<%= search %>”.</p>
+          <a class="btn btn-primary btn-sm" href="/admin/products/new?reference=<%= encodeURIComponent(search) %>"><%- icon('plus') %> Cadastrar referência</a>
+        </div>
+      <% } else { %>
+        <p class="muted small">Busque a referência para abrir a galeria do produto e enviar as fotos.</p>
+      <% } %>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-head"><h2>Envio em massa</h2></div>
+    <div class="card-body">
+      <% if (bulkResult) { %>
+        <div class="alert <%= bulkResult.ignored ? 'alert-warning' : 'alert-success' %>">
+          <%- icon(bulkResult.ignored ? 'alert' : 'check') %>
+          <div>
+            <%= bulkResult.imported %> imagem(ns) importada(s), <%= bulkResult.ignored %> ignorada(s).
+            <% if (bulkResult.missing.length) { %><div class="small">Referências não cadastradas: <% bulkResult.missing.slice(0, 30).forEach((reference) => { %><code><%= reference %></code> <% }) %></div><% } %>
+          </div>
         </div>
       <% } %>
-    <% } %>
-    <form class="stacked-form" action="/admin/upload/bulk?_csrf=<%= csrfToken %>" method="post" enctype="multipart/form-data">
-      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-      <label>
-        Separador da referência
-        <select name="separator">
-          <option value="_">_</option>
-          <option value="-">-</option>
-          <option value="space">espaço</option>
-          <option value="full">nome completo</option>
-        </select>
-      </label>
-      <label class="file-drop">
-        <input type="file" name="images" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" multiple>
-        <span>Selecionar imagens</span>
-      </label>
-      <button class="primary-button" type="submit">Importar</button>
-    </form>
-  </div>
-</section>
-<%- include('../../partials/admin-footer') %>
+      <form class="form-stack" action="/admin/upload/bulk?_csrf=<%= csrfToken %>" method="post" enctype="multipart/form-data"
+            data-uploader data-bulk data-max-mb="<%= limits.maxUploadMb %>" data-endpoint="/admin/upload/bulk">
+        <p class="muted small">O nome de cada arquivo deve começar pela referência, por exemplo <code>217.0010VT_01.jpg</code>. Cada arquivo é vinculado ao produto correspondente.</p>
+        <label class="field">
+          <span>Separador após a referência</span>
+          <select class="select" name="separator" data-separator>
+            <option value="_">Sublinhado ( _ )</option>
+            <option value="-">Hífen ( - )</option>
+            <option value="space">Espaço</option>
+            <option value="full">Nome completo do arquivo</option>
+          </select>
+        </label>
+        <label class="dropzone" data-dropzone>
+          <input type="file" name="images" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" multiple data-file-input>
+          <%- icon('upload') %>
+          <span class="dropzone-title">Arraste as imagens aqui</span>
+          <span class="dropzone-hint">JPG, PNG ou WEBP · até <%= limits.maxUploadMb %> MB cada</span>
+        </label>
+        <div class="upload-queue" data-queue></div>
+        <div class="upload-summary" data-summary hidden>
+          <span class="small muted" data-summary-text></span>
+          <button class="btn btn-ghost btn-sm" type="button" data-retry hidden><%- icon('restore') %> Tentar novamente as falhas</button>
+        </div>
+        <noscript><button class="btn btn-primary" type="submit">Importar</button></noscript>
+      </form>
+    </div>
+  </section>
+</div>
+<%- include('../../partials/admin/end') %>

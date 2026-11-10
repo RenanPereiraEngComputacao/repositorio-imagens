@@ -1,35 +1,80 @@
-<%- include('../../partials/admin-head', { title, page: 'collections' }) %>
-<section class="action-row">
-  <a class="primary-button" href="/admin/collections/new">Nova coleção</a>
-</section>
-
-<section class="panel">
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>Nome</th>
-          <th>Slug</th>
-          <th>Produtos</th>
-          <th>Status</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        <% collections.forEach((collection) => { %>
-          <tr>
-            <td><strong><%= collection.name %></strong></td>
-            <td><code><%= collection.slug %></code></td>
-            <td><%= collection.products_count %></td>
-            <td><span class="status <%= collection.active ? 'on' : 'off' %>"><%= collection.active ? 'Ativa' : 'Inativa' %></span></td>
-            <td class="table-actions"><a href="/admin/collections/<%= collection.id %>/edit">Editar</a></td>
-          </tr>
-        <% }) %>
-        <% if (collections.length === 0) { %>
-          <tr><td colspan="5">Nenhuma coleção cadastrada.</td></tr>
-        <% } %>
-      </tbody>
-    </table>
+<%- include('../../partials/admin/start') %>
+<header class="page-head">
+  <div>
+    <p class="eyebrow">Catálogo</p>
+    <h1><%= title %></h1>
   </div>
+  <div class="page-head-actions">
+    <a class="btn btn-primary" href="/admin/collections/new"><%- icon('plus') %> Nova coleção</a>
+  </div>
+</header>
+
+<form class="toolbar" method="get" action="/admin/collections" role="search">
+  <label class="search-input">
+    <span class="sr-only">Buscar coleção</span>
+    <%- icon('search') %>
+    <input class="input" type="search" name="q" value="<%= filters.q %>" placeholder="Buscar por nome ou slug">
+  </label>
+  <label>
+    <span class="sr-only">Status</span>
+    <select class="select" name="status" data-autosubmit>
+      <option value="">Todos os status</option>
+      <option value="active" <%= filters.status === 'active' ? 'selected' : '' %>>Ativas</option>
+      <option value="inactive" <%= filters.status === 'inactive' ? 'selected' : '' %>>Inativas</option>
+    </select>
+  </label>
+  <button class="btn btn-secondary" type="submit">Filtrar</button>
+  <% if (filters.q || filters.status) { %><a class="btn btn-ghost" href="/admin/collections">Limpar</a><% } %>
+</form>
+
+<p class="result-meta"><%= plural(pagination.total, 'coleção encontrada', 'coleções encontradas') %></p>
+
+<section class="card">
+  <% if (collections.length) { %>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr><th>Coleção</th><th class="hide-sm">Pasta</th><th class="num">Produtos</th><th class="num hide-sm">Imagens</th><th>Status</th><th><span class="sr-only">Ações</span></th></tr>
+        </thead>
+        <tbody>
+          <% collections.forEach((collection) => { %>
+            <tr>
+              <td>
+                <div class="cell-title">
+                  <% if (collection.file_url) { %>
+                    <img class="table-thumb" src="<%= thumbUrl(collection) %>" alt="" loading="lazy">
+                  <% } else { %>
+                    <span class="table-thumb table-thumb-empty"><%- icon('folder') %></span>
+                  <% } %>
+                  <div>
+                    <a href="/admin/products?collection=<%= collection.id %>"><%= collection.name %></a>
+                    <span class="cell-sub">Criada em <%= formatDate(collection.created_at) %></span>
+                  </div>
+                </div>
+              </td>
+              <td class="hide-sm"><code><%= collection.slug %></code></td>
+              <td class="num"><%= collection.products_count %></td>
+              <td class="num hide-sm"><%= collection.images_count %></td>
+              <td><span class="badge <%= collection.active ? 'badge-on' : 'badge-off' %>"><%= collection.active ? 'Ativa' : 'Inativa' %></span></td>
+              <td>
+                <div class="table-actions">
+                  <a class="btn btn-ghost btn-icon" href="/admin/collections/<%= collection.id %>/edit" aria-label="Editar <%= collection.name %>" title="Editar"><%- icon('edit') %></a>
+                  <a class="btn btn-ghost btn-icon" href="/admin/collections/<%= collection.id %>/excluir" aria-label="Excluir <%= collection.name %>" title="Excluir"><%- icon('trash') %></a>
+                </div>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } else { %>
+    <div class="empty">
+      <%- icon('folder') %>
+      <h2>Nenhuma coleção encontrada</h2>
+      <p>Crie a primeira coleção para organizar os produtos.</p>
+      <a class="btn btn-primary" href="/admin/collections/new"><%- icon('plus') %> Nova coleção</a>
+    </div>
+  <% } %>
 </section>
-<%- include('../../partials/admin-footer') %>
+<%- include('../../partials/admin/pagination') %>
+<%- include('../../partials/admin/end') %>

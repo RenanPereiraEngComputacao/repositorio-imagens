@@ -1,13 +1,14 @@
 const { Pool } = require('pg');
 const config = require('./config');
 
-if (!config.databaseUrl) {
-  console.warn('DATABASE_URL nao foi configurada. Configure o .env antes de iniciar em producao.');
-}
-
 const pool = new Pool({
   connectionString: config.databaseUrl,
-  ssl: config.databaseSsl ? { rejectUnauthorized: false } : false
+  ssl: config.databaseSsl ? { rejectUnauthorized: false } : false,
+  max: Number(process.env.DATABASE_POOL_MAX || 10)
+});
+
+pool.on('error', (error) => {
+  console.error('[db] erro inesperado no pool:', error.message);
 });
 
 async function query(text, params) {
@@ -22,7 +23,11 @@ async function transaction(work) {
     await client.query('COMMIT');
     return result;
   } catch (error) {
-    await client.query('ROLLBACK');
+    try {
+      await client.query('ROLLBACK');
+    } catch (rollbackError) {
+      console.error('[db] falha no rollback:', rollbackError.message);
+    }
     throw error;
   } finally {
     client.release();

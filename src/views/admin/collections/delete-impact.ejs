@@ -1,0 +1,33 @@
+<%- include('../../partials/admin/start') %>
+<header class="page-head">
+  <div>
+    <a class="back-link" href="/admin/collections"><%- icon('arrow-left') %> Coleções</a>
+    <h1>Excluir “<%= impact.name %>”</h1>
+  </div>
+</header>
+
+<section class="card card-narrow danger-zone">
+  <div class="card-head"><h2>Revise o impacto</h2></div>
+  <div class="card-body">
+    <div class="steps" aria-label="Etapas"><span aria-current="step">1 · Impacto</span><span aria-hidden="true">—</span><span>2 · Confirmação</span></div>
+    <p>Esta ação remove a coleção e <strong>tudo que pertence a ela</strong>. As páginas públicas e QR Codes destes produtos deixarão de funcionar.</p>
+
+    <div class="impact">
+      <div><span class="eyebrow">Coleção</span><strong class="impact-name"><%= impact.name %></strong><span class="small muted"><code><%= impact.slug %></code> · <%= impact.active ? 'ativa' : 'inativa' %></span></div>
+      <div><span class="eyebrow">Produtos</span><strong><%= impact.products_count %></strong><span class="small muted"><%= impact.active_products_count %> ativo(s)</span></div>
+      <div><span class="eyebrow">Imagens</span><strong><%= impact.images_count %></strong><span class="small muted"><%= Number(impact.known_bytes) ? formatBytes(impact.known_bytes) : 'arquivos físicos incluídos' %></span></div>
+    </div>
+
+    <div class="alert alert-info">
+      <%- icon('restore') %>
+      <div>Os registros e arquivos vão para a <strong>lixeira</strong> (fora da área pública) e podem ser restaurados por um administrador até serem purgados.</div>
+    </div>
+
+    <form class="form-actions" action="/admin/collections/<%= impact.id %>/excluir/confirmar" method="post">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <a class="btn btn-ghost" href="/admin/collections">Cancelar</a>
+      <button class="btn btn-danger" type="submit">Continuar para confirmação <%- icon('arrow-right') %></button>
+    </form>
+  </div>
+</section>
+<%- include('../../partials/admin/end') %>

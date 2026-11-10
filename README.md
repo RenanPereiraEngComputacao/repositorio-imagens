@@ -1,97 +1,70 @@
-# Repositório de imagens Stylezee
+# MÁLAGAH — Acervo de imagens
 
-Sistema web para administrar coleções, produtos/referências e imagens, com página pública em:
-
-```txt
-https://stylezee.com.br/imagens/{referencia}
-```
-
-O sistema não gera QR Code. Ele apenas atende a URL já gravada nas etiquetas.
-
-## Recursos
-
-- Painel administrativo com login.
-- Cadastro de coleções ativas/inativas.
-- Cadastro de produtos por referência única.
-- Upload múltiplo de JPG, PNG e WEBP.
-- Organização dos arquivos em `/imagens/{colecao}/{referencia}/arquivo`.
-- Definição de imagem principal, exclusão e reordenação.
-- Importação em massa por nome de arquivo.
-- Página pública mobile-first com galeria e tela cheia.
-- PostgreSQL como banco de dados.
-
-## Instalação local
-
-```bash
-npm install
-cp .env.example .env
-npm run admin:hash -- "sua senha"
-```
-
-Copie o hash gerado para `ADMIN_PASSWORD_HASH` no `.env`.
-
-Crie o banco PostgreSQL e rode:
-
-```bash
-export DATABASE_URL="postgres://usuario:senha@localhost:5432/stylezee_imagens"
-npm run db:migrate
-npm start
-```
-
-Acesse:
+Sistema web para administrar coleções, produtos (referências) e imagens, com página pública acessada pelos QR Codes das etiquetas:
 
 ```txt
-http://localhost:3000/admin
+https://seu-dominio.com.br/imagens/{referencia}
 ```
 
-## Deploy em servidor Linux
+O sistema não gera QR Codes — ele atende as URLs já impressas, que **foram mantidas sem alteração**.
 
-1. Instale Node.js 20+, PostgreSQL e Nginx.
-2. Crie o banco e usuário PostgreSQL.
-3. Copie o projeto para o servidor.
-4. Configure o `.env` com `BASE_URL=https://stylezee.com.br`.
-5. Rode `npm install --omit=dev`.
-6. Rode `npm run db:migrate`.
-7. Inicie o app com PM2 ou systemd.
-8. Configure o Nginx como proxy reverso para a porta do app.
+Stack mantida: **Node.js 20+, Express 4, PostgreSQL, EJS**.
 
-Se estiver testando por IP ou por `http://`, use `COOKIE_SECURE=false` no `.env`. Em produção com HTTPS, use `COOKIE_SECURE=auto`.
+## O que há nesta versão (2.0)
 
-Com PM2:
+**Administração**
+- Visão geral com indicadores reais (coleções, produtos, imagens, cobertura do catálogo, armazenamento, atividade recente, produtos aguardando fotos).
+- Coleções e produtos: cadastro, edição e exclusão, com busca, filtros, paginação e visualização em grade ou lista.
+- Galeria por produto: miniaturas, imagem principal, ordenação (arrastar ou setas), exclusão com confirmação.
+- Envio múltiplo com validação no navegador e no servidor, barra de progresso por arquivo, falhas isoladas e “tentar novamente”.
+- Envio em massa pelo nome do arquivo e importação de planilha (com modo de simulação).
+- Exclusão de coleção em duas etapas (impacto → frase de confirmação), com lixeira recuperável.
+- Histórico de atividade (auditoria) e lixeira com restauração.
+
+**Página pública**
+- Galeria mobile-first, versões otimizadas para carregamento rápido.
+- Visualização ampliada com navegação por setas, teclado e gesto de deslizar.
+- Download individual em **resolução original** e de **todas as imagens em ZIP**.
+
+## Documentação
+
+| Documento | Conteúdo |
+|---|---|
+| [docs/INSTALACAO.md](docs/INSTALACAO.md) | Instalação do zero (servidor Linux, Nginx, PM2) |
+| [docs/ATUALIZACAO.md](docs/ATUALIZACAO.md) | **Como atualizar a versão atual em produção para esta** |
+| [docs/BACKUP_E_ROLLBACK.md](docs/BACKUP_E_ROLLBACK.md) | Backup, restauração, lixeira e como voltar à versão anterior |
+| [docs/SEGURANCA.md](docs/SEGURANCA.md) | Controles de segurança implementados |
+| [CHANGELOG.md](CHANGELOG.md) | Resumo das alterações |
+
+## Comandos
 
 ```bash
-npm install -g pm2
-pm2 start ecosystem.config.cjs
-pm2 save
-pm2 startup
+npm start                     # inicia o servidor
+npm run db:migrate            # aplica migrações pendentes (seguro reaplicar)
+npm run db:migrate:status     # lista migrações aplicadas/pendentes
+npm run admin:hash -- "senha" # gera o hash da senha do administrador
+npm run images:derivatives    # gera versões otimizadas das imagens antigas (não altera originais)
+npm run trash:list            # lista a lixeira
+npm run trash:restore -- 12   # restaura o item #12 da lixeira
+npm run trash:purge -- --days 30  # apaga definitivamente itens com mais de 30 dias
+TEST_DATABASE_URL=postgres://usuario@localhost:5432/postgres npm test   # testes automatizados
 ```
 
-Exemplo Nginx:
-
-```nginx
-server {
-    server_name stylezee.com.br;
-
-    client_max_body_size 80M;
-
-    location / {
-        proxy_pass http://127.0.0.1:3000;
-        proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-}
-```
-
-## Importação em massa
-
-Na tela de upload, os arquivos podem ser vinculados pela referência no início do nome:
+## Estrutura
 
 ```txt
-217.0010VT_01.jpg
-217.0010VT_02.webp
+src/
+  app.js                 configuração do Express (segurança, sessão, rotas)
+  server.js              inicialização, recuperação de operações interrompidas, desligamento gracioso
+  config.js  db.js
+  middleware/            auth, csrf, flash, upload
+  routes/public.js       página pública, downloads e ZIP
+  routes/admin/          painel dividido por área (coleções, produtos, imagens, envio, importação, atividade)
+  services/              storage (caminhos seguros), images, image-processing, trash (lixeira), audit
+  views/                 templates EJS (admin, public, partials)
+public/assets/           CSS do design system, JS, ícones e fontes (auto-hospedadas)
+db/schema.sql            estrutura base (idempotente)
+db/migrations/           migrações incrementais
+scripts/                 migrate, trash, generate-derivatives, create-admin-hash
+test/                    testes de integração (banco descartável)
 ```
-
-O painel permite escolher o separador usado no nome do arquivo.

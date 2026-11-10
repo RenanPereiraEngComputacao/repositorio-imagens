@@ -1,45 +1,125 @@
-<%- include('../../partials/admin-head', { title, page: 'products' }) %>
-<section class="action-row">
-  <form class="search-form" method="get" action="/admin/products">
-    <input name="reference" value="<%= search %>" placeholder="Buscar referência">
-    <button class="secondary-button" type="submit">Buscar</button>
-  </form>
-  <a class="primary-button" href="/admin/products/new">Novo produto</a>
-  <a class="secondary-button" href="/admin/products/import">Importar planilha</a>
-</section>
-
-<section class="panel">
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>Referência</th>
-          <th>Produto</th>
-          <th>Coleção</th>
-          <th>Imagens</th>
-          <th>Status</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        <% products.forEach((product) => { %>
-          <tr>
-            <td><a href="/admin/products/<%= product.id %>/images"><strong><%= product.reference %></strong></a></td>
-            <td><%= product.name || '-' %></td>
-            <td><%= product.collection_name %></td>
-            <td><%= product.images_count %></td>
-            <td><span class="status <%= product.active ? 'on' : 'off' %>"><%= product.active ? 'Ativo' : 'Inativo' %></span></td>
-            <td class="table-actions">
-              <a href="/admin/products/<%= product.id %>/edit">Editar</a>
-              <a href="/imagens/<%= product.reference %>" target="_blank" rel="noreferrer">Ver</a>
-            </td>
-          </tr>
-        <% }) %>
-        <% if (products.length === 0) { %>
-          <tr><td colspan="6">Nenhum produto encontrado.</td></tr>
-        <% } %>
-      </tbody>
-    </table>
+<%- include('../../partials/admin/start') %>
+<%
+  const viewParams = (view) => { const p = new URLSearchParams(); Object.entries(filters).forEach(([k, v]) => { if (v && k !== 'view') p.set(k, v); }); if (view === 'list') p.set('view', 'list'); const s = p.toString(); return s ? `/admin/products?${s}` : '/admin/products'; };
+  const hasFilters = filters.q || filters.collection || filters.status || filters.images;
+%>
+<header class="page-head">
+  <div>
+    <p class="eyebrow">Catálogo</p>
+    <h1><%= title %></h1>
   </div>
-</section>
-<%- include('../../partials/admin-footer') %>
+  <div class="page-head-actions">
+    <a class="btn btn-secondary" href="/admin/products/import"><%- icon('sheet') %> Importar planilha</a>
+    <a class="btn btn-primary" href="/admin/products/new"><%- icon('plus') %> Novo produto</a>
+  </div>
+</header>
+
+<form class="toolbar" method="get" action="/admin/products" role="search">
+  <% if (filters.view === 'list') { %><input type="hidden" name="view" value="list"><% } %>
+  <label class="search-input">
+    <span class="sr-only">Buscar produto</span>
+    <%- icon('search') %>
+    <input class="input" type="search" name="q" value="<%= filters.q %>" placeholder="Referência, nome ou cor">
+  </label>
+  <label>
+    <span class="sr-only">Coleção</span>
+    <select class="select" name="collection" data-autosubmit>
+      <option value="">Todas as coleções</option>
+      <% collections.forEach((collection) => { %>
+        <option value="<%= collection.id %>" <%= String(filters.collection) === String(collection.id) ? 'selected' : '' %>><%= collection.name %><%= collection.active ? '' : ' (inativa)' %></option>
+      <% }) %>
+    </select>
+  </label>
+  <label>
+    <span class="sr-only">Status</span>
+    <select class="select" name="status" data-autosubmit>
+      <option value="">Todos os status</option>
+      <option value="active" <%= filters.status === 'active' ? 'selected' : '' %>>Ativos</option>
+      <option value="inactive" <%= filters.status === 'inactive' ? 'selected' : '' %>>Inativos</option>
+    </select>
+  </label>
+  <label>
+    <span class="sr-only">Imagens</span>
+    <select class="select" name="images" data-autosubmit>
+      <option value="">Com e sem imagens</option>
+      <option value="with" <%= filters.images === 'with' ? 'selected' : '' %>>Com imagens</option>
+      <option value="without" <%= filters.images === 'without' ? 'selected' : '' %>>Sem imagens</option>
+    </select>
+  </label>
+  <button class="btn btn-secondary" type="submit">Filtrar</button>
+  <% if (hasFilters) { %><a class="btn btn-ghost" href="<%= filters.view === 'list' ? '/admin/products?view=list' : '/admin/products' %>">Limpar</a><% } %>
+  <span class="toolbar-spacer"></span>
+  <div class="segmented" role="group" aria-label="Visualização">
+    <a href="<%= viewParams('grid') %>" aria-current="<%= filters.view === 'grid' %>" aria-label="Grade" title="Grade"><%- icon('grid') %></a>
+    <a href="<%= viewParams('list') %>" aria-current="<%= filters.view === 'list' %>" aria-label="Lista" title="Lista"><%- icon('list') %></a>
+  </div>
+</form>
+
+<p class="result-meta">
+  <% if (pagination.total) { %>Exibindo <%= pagination.from %>–<%= pagination.to %> de <%= plural(pagination.total, 'produto', 'produtos') %><% } else { %>Nenhum produto encontrado<% } %>
+</p>
+
+<% if (!products.length) { %>
+  <section class="card">
+    <div class="empty">
+      <%- icon('hanger') %>
+      <h2><%= hasFilters ? 'Nada encontrado com estes filtros' : 'Nenhum produto cadastrado' %></h2>
+      <p><%= hasFilters ? 'Ajuste a busca ou limpe os filtros.' : 'Cadastre um produto ou importe uma planilha.' %></p>
+      <% if (filters.q && !filters.collection && !filters.status && !filters.images) { %><a class="btn btn-primary" href="/admin/products/new?reference=<%= encodeURIComponent(filters.q) %>"><%- icon('plus') %> Cadastrar “<%= filters.q %>”</a><% } %>
+    </div>
+  </section>
+<% } else if (filters.view === 'grid') { %>
+  <section class="product-grid">
+    <% products.forEach((product) => { %>
+      <a class="product-tile" href="/admin/products/<%= product.id %>/images">
+        <div class="product-tile-media">
+          <% if (product.file_url) { %>
+            <img src="<%= thumbUrl(product) %>" alt="" loading="lazy">
+          <% } else { %>
+            <div class="product-tile-empty"><%- icon('image') %><span>Sem imagens</span></div>
+          <% } %>
+          <div class="product-tile-badges">
+            <% if (!product.active) { %><span class="badge badge-off">Inativo</span><% } %>
+            <% if (!product.collection_active) { %><span class="badge badge-warning">Coleção inativa</span><% } %>
+          </div>
+          <% if (product.images_count) { %><span class="product-tile-count"><%= product.images_count %> img.</span><% } %>
+        </div>
+        <div>
+          <div class="product-tile-ref"><%= product.reference %></div>
+          <div class="product-tile-name"><%= product.name || product.collection_name %></div>
+        </div>
+      </a>
+    <% }) %>
+  </section>
+<% } else { %>
+  <section class="card">
+    <div class="table-wrap">
+      <table class="table">
+        <thead><tr><th>Produto</th><th class="hide-sm">Coleção</th><th class="num">Imagens</th><th>Status</th><th><span class="sr-only">Ações</span></th></tr></thead>
+        <tbody>
+          <% products.forEach((product) => { %>
+            <tr>
+              <td>
+                <div class="cell-title">
+                  <% if (product.file_url) { %><img class="table-thumb" src="<%= thumbUrl(product) %>" alt="" loading="lazy"><% } else { %><span class="table-thumb table-thumb-empty"><%- icon('image') %></span><% } %>
+                  <div><a href="/admin/products/<%= product.id %>/images"><%= product.reference %></a><span class="cell-sub"><%= product.name || '—' %></span></div>
+                </div>
+              </td>
+              <td class="hide-sm"><%= product.collection_name %></td>
+              <td class="num"><%= product.images_count %></td>
+              <td><span class="badge <%= product.active ? 'badge-on' : 'badge-off' %>"><%= product.active ? 'Ativo' : 'Inativo' %></span></td>
+              <td>
+                <div class="table-actions">
+                  <a class="btn btn-ghost btn-icon" href="/admin/products/<%= product.id %>/edit" aria-label="Editar <%= product.reference %>" title="Editar"><%- icon('edit') %></a>
+                  <a class="btn btn-ghost btn-icon" href="/imagens/<%= encodeURIComponent(product.reference) %>" target="_blank" rel="noopener" aria-label="Ver página pública de <%= product.reference %>" title="Página pública"><%- icon('eye') %></a>
+                </div>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </section>
+<% } %>
+<%- include('../../partials/admin/pagination') %>
+<%- include('../../partials/admin/end') %>

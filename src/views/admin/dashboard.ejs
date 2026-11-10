@@ -1,67 +1,118 @@
-<%- include('../partials/admin-head', { title, page: 'dashboard' }) %>
-<section class="stats-grid">
-  <article class="stat-card">
-    <span>Coleções</span>
-    <strong><%= stats.collections %></strong>
+<%- include('../partials/admin/start') %>
+<header class="page-head">
+  <div>
+    <p class="eyebrow">Painel <%= brand %></p>
+    <h1><%= title %></h1>
+  </div>
+  <div class="page-head-actions">
+    <a class="btn btn-secondary" href="/admin/products/new"><%- icon('plus') %> Novo produto</a>
+    <a class="btn btn-primary" href="/admin/upload"><%- icon('upload') %> Enviar imagens</a>
+  </div>
+</header>
+
+<section class="stats" aria-label="Indicadores">
+  <article class="stat">
+    <span class="eyebrow">Coleções</span>
+    <span class="stat-value"><%= stats.collections.toLocaleString('pt-BR') %></span>
+    <span class="stat-meta"><%= stats.active_collections %> ativa(s)</span>
   </article>
-  <article class="stat-card accent-teal">
-    <span>Produtos</span>
-    <strong><%= stats.products %></strong>
+  <article class="stat">
+    <span class="eyebrow">Produtos</span>
+    <span class="stat-value"><%= stats.products.toLocaleString('pt-BR') %></span>
+    <span class="stat-meta"><%= stats.active_products %> ativo(s) · <a href="/admin/products?images=without"><%= stats.products_without_images %> sem imagem</a></span>
   </article>
-  <article class="stat-card accent-orange">
-    <span>Imagens</span>
-    <strong><%= stats.images %></strong>
+  <article class="stat">
+    <span class="eyebrow">Imagens</span>
+    <span class="stat-value"><%= stats.images.toLocaleString('pt-BR') %></span>
+    <span class="stat-meta">+<%= stats.images_last_week %> nos últimos 7 dias</span>
+  </article>
+  <article class="stat">
+    <span class="eyebrow">Cobertura do catálogo</span>
+    <span class="stat-value"><%= stats.coverage %>%</span>
+    <div class="meter" aria-hidden="true"><span data-meter="<%= stats.coverage %>"></span></div>
+    <span class="stat-meta"><%= formatBytes(stats.known_bytes) %> armazenados<% if (stats.images_without_size) { %> · <%= stats.images_without_size %> sem medição<% } %></span>
   </article>
 </section>
 
-<section class="split-grid">
-  <div class="panel">
-    <div class="panel-heading">
-      <h2>Produtos recentes</h2>
-      <a href="/admin/products">Ver todos</a>
-    </div>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Referência</th>
-            <th>Produto</th>
-            <th>Coleção</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          <% recentProducts.forEach((product) => { %>
-            <tr>
-              <td><a href="/admin/products/<%= product.id %>/images"><%= product.reference %></a></td>
-              <td><%= product.name || '-' %></td>
-              <td><%= product.collection_name %></td>
-              <td><span class="status <%= product.active ? 'on' : 'off' %>"><%= product.active ? 'Ativo' : 'Inativo' %></span></td>
-            </tr>
+<div class="split">
+  <div class="stack">
+    <section class="card">
+      <div class="card-head"><h2>Últimas imagens</h2><a href="/admin/upload">Enviar</a></div>
+      <div class="card-body">
+        <% if (recentImages.length) { %>
+          <div class="thumb-grid">
+            <% recentImages.forEach((image) => { %>
+              <a href="/admin/products/<%= image.product_id %>/images" title="<%= image.reference %>">
+                <img src="<%= thumbUrl(image) %>" alt="Imagem da referência <%= image.reference %>" loading="lazy">
+              </a>
+            <% }) %>
+          </div>
+        <% } else { %>
+          <div class="empty empty-sm"><%- icon('image') %><p>Nenhuma imagem enviada ainda.</p></div>
+        <% } %>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><h2>Produtos recentes</h2><a href="/admin/products">Ver todos</a></div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>Referência</th><th class="hide-sm">Coleção</th><th class="num">Imagens</th><th>Status</th></tr></thead>
+          <tbody>
+            <% recentProducts.forEach((product) => { %>
+              <tr>
+                <td><div class="cell-title"><div><a href="/admin/products/<%= product.id %>/images"><%= product.reference %></a><span class="cell-sub"><%= product.name || '—' %></span></div></div></td>
+                <td class="hide-sm"><%= product.collection_name %></td>
+                <td class="num"><%= product.images_count %></td>
+                <td><span class="badge <%= product.active ? 'badge-on' : 'badge-off' %>"><%= product.active ? 'Ativo' : 'Inativo' %></span></td>
+              </tr>
+            <% }) %>
+            <% if (!recentProducts.length) { %><tr><td colspan="4" class="muted">Nenhum produto cadastrado.</td></tr><% } %>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <div class="stack">
+    <section class="card">
+      <div class="card-head"><h2>Aguardando imagens</h2><a href="/admin/products?images=without&status=active">Ver todos</a></div>
+      <div class="card-body">
+        <% if (withoutImages.length) { %>
+          <ul class="list-plain">
+            <% withoutImages.forEach((product) => { %>
+              <li><a href="/admin/products/<%= product.id %>/images"><strong><%= product.reference %></strong><span class="cell-sub"><%= product.collection_name %></span></a><a class="btn btn-ghost btn-sm" href="/admin/products/<%= product.id %>/images"><%- icon('upload') %></a></li>
+            <% }) %>
+          </ul>
+        <% } else { %>
+          <p class="muted">Todos os produtos ativos têm imagens.</p>
+        <% } %>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><h2>Coleções</h2><a href="/admin/collections">Gerenciar</a></div>
+      <div class="card-body">
+        <ul class="list-plain">
+          <% collections.forEach((collection) => { %>
+            <li><a href="/admin/products?collection=<%= collection.id %>"><%= collection.name %></a><span class="small muted nowrap"><%= collection.products_count %> prod. · <%= collection.images_count %> img.</span></li>
           <% }) %>
-          <% if (recentProducts.length === 0) { %>
-            <tr><td colspan="4">Nenhum produto cadastrado.</td></tr>
-          <% } %>
-        </tbody>
-      </table>
-    </div>
-  </div>
+          <% if (!collections.length) { %><li class="muted">Nenhuma coleção cadastrada.</li><% } %>
+        </ul>
+      </div>
+    </section>
 
-  <div class="panel">
-    <div class="panel-heading">
-      <h2>Últimas imagens</h2>
-      <a href="/admin/upload">Upload</a>
-    </div>
-    <div class="thumb-strip">
-      <% recentImages.forEach((image) => { %>
-        <a href="/imagens/<%= image.reference %>" target="_blank" rel="noreferrer">
-          <img src="<%= image.file_url %>" alt="Imagem da referência <%= image.reference %>">
-        </a>
-      <% }) %>
-      <% if (recentImages.length === 0) { %>
-        <p>Nenhuma imagem importada.</p>
-      <% } %>
-    </div>
+    <section class="card">
+      <div class="card-head"><h2>Atividade</h2><a href="/admin/atividade">Histórico</a></div>
+      <div class="card-body">
+        <ul class="list-plain">
+          <% activity.forEach((entry) => { %>
+            <li><span><strong class="small"><%= actionLabel(entry.action) %></strong><span class="cell-sub"><%= entry.summary %></span></span><span class="timeline-time"><%= formatDate(entry.created_at) %></span></li>
+          <% }) %>
+          <% if (!activity.length) { %><li class="muted">Sem registros.</li><% } %>
+        </ul>
+      </div>
+    </section>
   </div>
-</section>
-<%- include('../partials/admin-footer') %>
+</div>
+<%- include('../partials/admin/end') %>

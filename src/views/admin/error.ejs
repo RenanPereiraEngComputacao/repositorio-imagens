@@ -1,7 +1,10 @@
-<%- include('../partials/admin-head', { title, page: '' }) %>
-<section class="empty-state">
-  <h2><%= title %></h2>
-  <p><%= message %></p>
-  <a class="primary-button" href="/admin/dashboard">Voltar</a>
+<%- include('../partials/admin/start') %>
+<section class="card">
+  <div class="empty">
+    <%- icon('alert') %>
+    <h2><%= title %></h2>
+    <p><%= message %></p>
+    <a class="btn btn-primary" href="/admin/dashboard">Voltar ao painel</a>
+  </div>
 </section>
-<%- include('../partials/admin-footer') %>
+<%- include('../partials/admin/end') %>

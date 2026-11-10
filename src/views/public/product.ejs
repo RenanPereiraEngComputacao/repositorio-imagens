@@ -2,45 +2,131 @@
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title><%= title %> | Málagah Imagens</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title><%= title %> · <%= brand %></title>
+  <meta name="description" content="Imagens oficiais da peça <%= product.reference %><%= product.name ? ` — ${product.name}` : '' %> · <%= brand %>.">
+  <meta property="og:title" content="<%= product.reference %> · <%= brand %>">
+  <meta property="og:type" content="product">
+  <meta property="og:url" content="<%= pageUrl %>">
+  <% if (images.length) { %><meta property="og:image" content="<%= baseUrl %><%= displayUrl(images[0]) %>"><% } %>
+  <meta name="theme-color" content="#fbf9f5">
+  <link rel="canonical" href="<%= pageUrl %>">
+  <link rel="preload" href="/assets/fonts/cormorant-garamond-latin-500-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/assets/styles.css">
 </head>
 <body class="public-body">
-  <main class="product-public">
-    <header class="public-header">
-      <div class="brand-line">
-        <span class="brand-mark">S</span>
-        <strong>Málagah</strong>
-      </div>
-      <p><%= product.collection_name %></p>
-      <h1><%= product.reference %></h1>
-      <% if (product.name) { %>
-        <h2><%= product.name %></h2>
-      <% } %>
-      <% if (product.description) { %>
-        <p class="public-description"><%= product.description %></p>
-      <% } %>
-    </header>
+  <header class="public-header">
+    <span class="wordmark"><%= brand %></span>
+  </header>
 
-    <% if (images.length > 0) { %>
-      <section class="public-gallery">
-        <% images.forEach((image, index) => { %>
-          <button class="public-image <%= index === 0 ? 'featured' : '' %>" type="button" data-lightbox="<%= image.file_url %>">
-            <img src="<%= image.file_url %>" alt="Imagem <%= index + 1 %> da referência <%= product.reference %>" loading="<%= index === 0 ? 'eager' : 'lazy' %>">
-          </button>
-        <% }) %>
+  <main class="public-main">
+    <% if (images.length) { %>
+      <section class="showcase" data-gallery>
+        <div class="showcase-media">
+          <div class="stage">
+            <button class="stage-button" type="button" data-open-lightbox aria-label="Ampliar imagem">
+              <img src="<%= displayUrl(images[0]) %>" alt="<%= product.reference %> — imagem 1 de <%= images.length %>" data-stage-image fetchpriority="high"
+                   <% if (images[0].width) { %>width="<%= images[0].width %>" height="<%= images[0].height %>"<% } %>>
+            </button>
+            <% if (images.length > 1) { %>
+              <button class="stage-nav stage-prev" type="button" data-step="-1" aria-label="Imagem anterior"><%- icon('chevron-left') %></button>
+              <button class="stage-nav stage-next" type="button" data-step="1" aria-label="Próxima imagem"><%- icon('chevron-right') %></button>
+              <span class="stage-counter" data-counter aria-live="polite">1 / <%= images.length %></span>
+            <% } %>
+            <span class="stage-zoom" aria-hidden="true"><%- icon('expand') %></span>
+          </div>
+          <% if (images.length > 1) { %>
+            <div class="thumbs" role="list" aria-label="Miniaturas">
+              <% images.forEach((image, index) => { %>
+                <button class="thumb" type="button" role="listitem" data-thumb="<%= index %>" aria-label="Ver imagem <%= index + 1 %>" aria-current="<%= index === 0 %>">
+                  <img src="<%= thumbUrl(image) %>" alt="" loading="<%= index < 6 ? 'eager' : 'lazy' %>">
+                </button>
+              <% }) %>
+            </div>
+          <% } %>
+        </div>
+
+        <aside class="showcase-info">
+          <div>
+            <p class="eyebrow"><%= product.collection_name %></p>
+            <h1><%= product.reference %></h1>
+          </div>
+          <% if (product.name) { %><p class="showcase-name"><%= product.name %></p><% } %>
+          <% if (product.description) { %><p class="showcase-desc"><%= product.description %></p><% } %>
+          <hr class="rule">
+          <div class="actions">
+            <a class="btn btn-primary btn-block" href="/download/<%= encodeURIComponent(product.reference) %>/<%= images[0].id %>" download data-download-current data-toast="Download iniciado">
+              <%- icon('download') %> Baixar imagem atual
+            </a>
+            <% if (images.length > 1) { %>
+              <a class="btn btn-secondary btn-block" href="/download/<%= encodeURIComponent(product.reference) %>/todas" download data-toast="Preparando ZIP com <%= images.length %> imagens…">
+                <%- icon('archive') %> Baixar todas (<%= images.length %>) em ZIP
+              </a>
+            <% } %>
+            <button class="btn btn-ghost btn-block" type="button" data-copy="<%= pageUrl %>"><%- icon('link') %> Copiar link desta página</button>
+          </div>
+          <dl class="facts">
+            <dt>Imagens</dt><dd><%= images.length %></dd>
+            <dt>Download</dt><dd>Resolução original</dd>
+          </dl>
+        </aside>
       </section>
+
+      <section class="grid-section" aria-labelledby="todas">
+        <h2 id="todas">Todas as imagens</h2>
+        <div class="public-grid">
+          <% images.forEach((image, index) => { %>
+            <figure class="public-card">
+              <div class="public-card-media">
+                <button type="button" data-open-index="<%= index %>" aria-label="Ampliar imagem <%= index + 1 %>">
+                  <img src="<%= thumbUrl(image) %>" alt="<%= product.reference %> — imagem <%= index + 1 %>" loading="lazy">
+                </button>
+              </div>
+              <figcaption class="public-card-foot">
+                <span><%= String(index + 1).padStart(2, '0') %></span>
+                <a href="/download/<%= encodeURIComponent(product.reference) %>/<%= image.id %>" download data-toast="Download iniciado" aria-label="Baixar imagem <%= index + 1 %> em resolução original"><%- icon('download') %> Baixar</a>
+              </figcaption>
+            </figure>
+          <% }) %>
+        </div>
+      </section>
+
+      <script type="application/json" data-gallery-data><%- JSON.stringify(images.map((image, index) => ({
+        id: String(image.id),
+        display: displayUrl(image),
+        original: image.file_url,
+        download: `/download/${encodeURIComponent(product.reference)}/${image.id}`,
+        alt: `${product.reference} — imagem ${index + 1} de ${images.length}`
+      }))).replace(/</g, '\\u003c') %></script>
+
+      <div class="lightbox" data-lightbox hidden role="dialog" aria-modal="true" aria-label="Visualização ampliada">
+        <div class="lightbox-top">
+          <span class="lightbox-counter" data-lb-counter></span>
+          <button class="lb-btn" type="button" data-lb-close aria-label="Fechar"><%- icon('close') %></button>
+        </div>
+        <div class="lightbox-stage" data-lb-stage>
+          <img alt="" data-lb-image>
+          <% if (images.length > 1) { %>
+            <button class="lb-btn lb-nav lb-prev" type="button" data-lb-step="-1" aria-label="Imagem anterior"><%- icon('chevron-left') %></button>
+            <button class="lb-btn lb-nav lb-next" type="button" data-lb-step="1" aria-label="Próxima imagem"><%- icon('chevron-right') %></button>
+          <% } %>
+        </div>
+        <div class="lightbox-bottom">
+          <span class="small">Deslize para navegar</span>
+          <a class="btn btn-light btn-sm" href="#" download data-lb-download data-toast="Download iniciado"><%- icon('download') %> Baixar original</a>
+        </div>
+      </div>
     <% } else { %>
-      <section class="not-found-public compact">
-        <h2>Imagens não encontradas para esta referência.</h2>
+      <section class="not-found">
+        <p class="eyebrow"><%= product.collection_name %></p>
+        <h1><%= product.reference %></h1>
+        <p>As imagens desta peça ainda não foram publicadas. Tente novamente em breve.</p>
       </section>
     <% } %>
   </main>
-  <div class="lightbox" data-lightbox-panel hidden>
-    <button type="button" data-lightbox-close aria-label="Fechar">×</button>
-    <img alt="Imagem em tela cheia">
-  </div>
-  <script src="/assets/public.js"></script>
+
+  <footer class="public-footer"><%= brand %> · Imagens oficiais</footer>
+  <div class="toast-region" data-toasts aria-live="polite"></div>
+  <script src="/assets/public.js" defer></script>
 </body>
 </html>

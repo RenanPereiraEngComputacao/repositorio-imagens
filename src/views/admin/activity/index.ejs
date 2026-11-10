@@ -1,0 +1,56 @@
+<%- include('../../partials/admin/start') %>
+<header class="page-head">
+  <div>
+    <p class="eyebrow">Auditoria</p>
+    <h1><%= title %></h1>
+  </div>
+</header>
+
+<form class="toolbar" method="get" action="/admin/atividade">
+  <label>
+    <span class="sr-only">Tipo</span>
+    <select class="select" name="action" data-autosubmit>
+      <option value="">Todos os eventos</option>
+      <% [['auth', 'Acessos'], ['collection', 'Coleções'], ['product', 'Produtos'], ['image', 'Imagens']].forEach(([value, label]) => { %>
+        <option value="<%= value %>" <%= filters.action === value ? 'selected' : '' %>><%= label %></option>
+      <% }) %>
+    </select>
+  </label>
+  <label>
+    <span class="sr-only">Resultado</span>
+    <select class="select" name="status" data-autosubmit>
+      <option value="">Todos os resultados</option>
+      <option value="success" <%= filters.status === 'success' ? 'selected' : '' %>>Sucesso</option>
+      <option value="failure" <%= filters.status === 'failure' ? 'selected' : '' %>>Falha</option>
+      <option value="rejected" <%= filters.status === 'rejected' ? 'selected' : '' %>>Rejeitado</option>
+    </select>
+  </label>
+  <noscript><button class="btn btn-secondary" type="submit">Filtrar</button></noscript>
+</form>
+
+<section class="card">
+  <% if (entries.length) { %>
+    <div class="table-wrap">
+      <table class="table">
+        <thead><tr><th>Quando</th><th>Evento</th><th>Detalhe</th><th class="hide-sm">Usuário</th><th class="hide-sm">IP</th></tr></thead>
+        <tbody>
+          <% entries.forEach((entry) => { %>
+            <tr>
+              <td class="nowrap small"><%= formatDate(entry.created_at) %></td>
+              <td class="nowrap">
+                <span class="badge <%= entry.status === 'success' ? 'badge-on' : (entry.status === 'failure' ? 'badge-danger' : 'badge-warning') %>"><%= actionLabel(entry.action) %></span>
+              </td>
+              <td class="small"><%= entry.summary %></td>
+              <td class="hide-sm small"><%= entry.actor %></td>
+              <td class="hide-sm small muted"><%= entry.ip || '—' %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } else { %>
+    <div class="empty"><%- icon('activity') %><h2>Sem registros</h2></div>
+  <% } %>
+</section>
+<%- include('../../partials/admin/pagination') %>
+<%- include('../../partials/admin/end') %>

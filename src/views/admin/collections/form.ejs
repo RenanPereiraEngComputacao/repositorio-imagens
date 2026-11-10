@@ -1,26 +1,38 @@
-<%- include('../../partials/admin-head', { title, page: 'collections' }) %>
-<section class="panel narrow">
-  <% if (typeof error !== 'undefined') { %>
-    <div class="flash error"><%= error %></div>
-  <% } %>
-  <form class="stacked-form" action="<%= action %>" method="post">
+<%- include('../../partials/admin/start') %>
+<header class="page-head">
+  <div>
+    <a class="back-link" href="/admin/collections"><%- icon('arrow-left') %> Coleções</a>
+    <h1><%= title %></h1>
+  </div>
+</header>
+
+<section class="card card-narrow">
+  <form class="card-body form-stack" action="<%= action %>" method="post" novalidate>
     <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-    <label>
-      Nome da coleção
-      <input name="name" value="<%= collection.name || '' %>" placeholder="INVERNO 2026" required>
+    <% if (typeof error !== 'undefined' && error) { %>
+      <div class="alert alert-error" role="alert"><%- icon('alert') %><div><%= error %></div></div>
+    <% } %>
+    <label class="field">
+      <span>Nome da coleção</span>
+      <input class="input" name="name" value="<%= collection.name || '' %>" placeholder="Verão 2027" maxlength="160" required data-slug-source>
     </label>
-    <label>
-      Slug/pasta
-      <input name="slug" value="<%= collection.slug || '' %>" placeholder="inverno-2026">
+    <label class="field">
+      <span>Slug / pasta</span>
+      <input class="input input-mono" name="slug" value="<%= collection.slug || '' %>" placeholder="verao-2027" maxlength="160" data-slug-target>
+      <span class="field-hint">Usado como nome da pasta das novas imagens. Alterar o slug não move as imagens já enviadas — os links públicos existentes continuam funcionando.</span>
     </label>
-    <label class="switch-row">
+    <label class="check">
       <input type="checkbox" name="active" <%= collection.active ? 'checked' : '' %>>
-      <span>Ativa</span>
+      <span>Coleção ativa (produtos visíveis na página pública)</span>
     </label>
     <div class="form-actions">
-      <a class="ghost-button" href="/admin/collections">Cancelar</a>
-      <button class="primary-button" type="submit">Salvar</button>
+      <% if (collection.id) { %>
+        <a class="btn btn-danger-outline" href="/admin/collections/<%= collection.id %>/excluir"><%- icon('trash') %> Excluir coleção</a>
+        <span class="toolbar-spacer"></span>
+      <% } %>
+      <a class="btn btn-ghost" href="/admin/collections">Cancelar</a>
+      <button class="btn btn-primary" type="submit">Salvar</button>
     </div>
   </form>
 </section>
-<%- include('../../partials/admin-footer') %>
+<%- include('../../partials/admin/end') %>

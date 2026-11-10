@@ -1,0 +1,108 @@
+<%- include('../../partials/admin/start') %>
+<%
+  const publicUrl = `/imagens/${encodeURIComponent(product.reference)}`;
+  const isPublic = product.active && product.collection_active;
+  const cover = images.find((image) => image.is_main) || images[0];
+%>
+<a class="back-link" href="/admin/products"><%- icon('arrow-left') %> Produtos</a>
+
+<section class="card product-head">
+  <% if (cover) { %><img class="product-head-cover" src="<%= thumbUrl(cover) %>" alt=""><% } else { %><span class="product-head-cover table-thumb-empty"><%- icon('image') %></span><% } %>
+  <div>
+    <p class="eyebrow"><%= product.collection_name %></p>
+    <h1><%= product.reference %></h1>
+    <div class="product-head-meta">
+      <% if (product.name) { %><span><%= product.name %></span><% } %>
+      <span class="badge <%= isPublic ? 'badge-on' : 'badge-off' %>"><%= isPublic ? 'Página pública ativa' : (product.active ? 'Coleção inativa' : 'Produto inativo') %></span>
+      <span><%= plural(images.length, 'imagem', 'imagens') %><% if (totalBytes) { %> · <%= formatBytes(totalBytes) %><% } %></span>
+    </div>
+  </div>
+  <div class="page-head-actions">
+    <button class="btn btn-ghost" type="button" data-copy="<%= baseUrl %><%= publicUrl %>"><%- icon('link') %> Copiar link</button>
+    <a class="btn btn-secondary" href="<%= publicUrl %>" target="_blank" rel="noopener"><%- icon('eye') %> Página pública</a>
+    <a class="btn btn-secondary" href="/admin/products/<%= product.id %>/edit"><%- icon('edit') %> Editar</a>
+  </div>
+</section>
+
+<div class="stack">
+  <section class="card">
+    <div class="card-head"><h2>Enviar imagens</h2><span class="small muted">JPG, PNG ou WEBP · até <%= limits.maxUploadMb %> MB cada</span></div>
+    <div class="card-body">
+      <form action="/admin/products/<%= product.id %>/images?_csrf=<%= csrfToken %>" method="post" enctype="multipart/form-data"
+            data-uploader data-max-mb="<%= limits.maxUploadMb %>" data-endpoint="/admin/products/<%= product.id %>/images">
+        <label class="dropzone" data-dropzone>
+          <input type="file" name="images" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" multiple data-file-input>
+          <%- icon('upload') %>
+          <span class="dropzone-title">Arraste as imagens aqui</span>
+          <span class="dropzone-hint">ou toque para selecionar — o arquivo original é preservado para download</span>
+        </label>
+        <div class="upload-queue" data-queue></div>
+        <div class="upload-summary" data-summary hidden>
+          <span class="small muted" data-summary-text></span>
+          <div class="page-head-actions">
+            <button class="btn btn-ghost btn-sm" type="button" data-retry hidden><%- icon('restore') %> Tentar novamente as falhas</button>
+            <button class="btn btn-primary btn-sm" type="button" data-reload hidden>Atualizar galeria</button>
+          </div>
+        </div>
+        <noscript><button class="btn btn-primary" type="submit">Enviar imagens</button></noscript>
+      </form>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-head gallery-bar">
+      <h2>Galeria</h2>
+      <% if (images.length > 1) { %>
+        <form action="/admin/products/<%= product.id %>/images/reorder" method="post" data-order-form>
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <input type="hidden" name="image_order" value="<%= images.map((image) => image.id).join(',') %>" data-order-input>
+          <span class="small muted">Arraste ou use as setas para ordenar</span>
+          <button class="btn btn-primary btn-sm" type="submit" data-order-save hidden>Salvar ordem</button>
+        </form>
+      <% } %>
+    </div>
+    <div class="card-body">
+      <% if (images.length) { %>
+        <div class="admin-gallery" data-sortable>
+          <% images.forEach((image, index) => { %>
+            <article class="image-card <%= image.is_main ? 'is-main' : '' %>" draggable="true" data-image-id="<%= image.id %>">
+              <div class="image-card-media">
+                <img src="<%= thumbUrl(image) %>" alt="Imagem <%= index + 1 %> de <%= product.reference %>" loading="lazy">
+                <% if (image.is_main) { %><span class="badge badge-main">Principal</span><% } %>
+                <span class="image-card-handle" aria-hidden="true"><%- icon('drag') %></span>
+              </div>
+              <div class="image-card-info">
+                <span><%= image.width && image.height ? `${image.width}×${image.height}` : 'Original' %></span>
+                <span><%= image.size_bytes ? formatBytes(image.size_bytes) : '' %></span>
+              </div>
+              <div class="image-card-actions">
+                <span>
+                  <button class="btn btn-ghost btn-icon btn-sm" type="button" data-move="-1" aria-label="Mover para trás" title="Mover para trás"><%- icon('chevron-left') %></button>
+                  <button class="btn btn-ghost btn-icon btn-sm" type="button" data-move="1" aria-label="Mover para frente" title="Mover para frente"><%- icon('chevron-right') %></button>
+                </span>
+                <span>
+                  <a class="btn btn-ghost btn-icon btn-sm" href="<%= image.file_url %>" target="_blank" rel="noopener" aria-label="Abrir original" title="Abrir original"><%- icon('expand') %></a>
+                  <% if (!image.is_main) { %>
+                    <form action="/admin/products/<%= product.id %>/images/<%= image.id %>/main" method="post">
+                      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                      <button class="btn btn-ghost btn-icon btn-sm" type="submit" aria-label="Definir como principal" title="Definir como principal"><%- icon('star') %></button>
+                    </form>
+                  <% } else { %>
+                    <span class="btn btn-ghost btn-icon btn-sm" title="Imagem principal" aria-label="Imagem principal"><%- icon('star-fill') %></span>
+                  <% } %>
+                  <form action="/admin/products/<%= product.id %>/images/<%= image.id %>/delete" method="post">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <button class="btn btn-ghost btn-icon btn-sm" type="submit" data-confirm="Excluir esta imagem? Ela poderá ser restaurada pela lixeira." data-confirm-title="Excluir imagem" aria-label="Excluir imagem" title="Excluir"><%- icon('trash') %></button>
+                  </form>
+                </span>
+              </div>
+            </article>
+          <% }) %>
+        </div>
+      <% } else { %>
+        <div class="empty empty-sm"><%- icon('image') %><h2>Nenhuma imagem ainda</h2><p>Envie as fotos acima. A primeira será a principal.</p></div>
+      <% } %>
+    </div>
+  </section>
+</div>
+<%- include('../../partials/admin/end') %>

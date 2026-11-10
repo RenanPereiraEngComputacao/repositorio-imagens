@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="csrf-token" content="<%= csrfToken %>">
+  <title><%= title %> · <%= brand %> Imagens</title>
+  <link rel="preload" href="/assets/fonts/jost-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/assets/fonts/cormorant-garamond-latin-500-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/assets/styles.css">
+</head>
+<body class="admin-body">
+<%
+  const current = typeof page !== 'undefined' ? page : '';
+  const nav = [
+    { key: 'dashboard', href: '/admin/dashboard', label: 'Visão geral', icon: 'home' },
+    { key: 'collections', href: '/admin/collections', label: 'Coleções', icon: 'folder' },
+    { key: 'products', href: '/admin/products', label: 'Produtos', icon: 'hanger' },
+    { key: 'upload', href: '/admin/upload', label: 'Envio de imagens', icon: 'upload' }
+  ];
+  const navSystem = [
+    { key: 'activity', href: '/admin/atividade', label: 'Atividade', icon: 'activity' },
+    { key: 'trash', href: '/admin/lixeira', label: 'Lixeira', icon: 'trash' }
+  ];
+%>
+  <header class="mobile-bar">
+    <button class="btn btn-ghost btn-icon" type="button" data-nav-open aria-controls="sidebar" aria-expanded="false" aria-label="Abrir menu"><%- icon('menu') %></button>
+    <a class="wordmark" href="/admin/dashboard"><%= brand %></a>
+    <span class="btn-icon" aria-hidden="true"></span>
+  </header>
+  <div class="admin-shell">
+    <aside class="sidebar" id="sidebar" data-sidebar>
+      <a class="sidebar-brand" href="/admin/dashboard">
+        <span class="wordmark"><%= brand %></span>
+        <span class="wordmark-sub">Acervo de imagens</span>
+      </a>
+      <nav aria-label="Menu principal">
+        <div class="side-nav">
+          <% nav.forEach((item) => { %>
+            <a href="<%= item.href %>" <%- current === item.key ? 'aria-current="page"' : '' %>><%- icon(item.icon) %><span><%= item.label %></span></a>
+          <% }) %>
+          <div class="side-nav-label">Sistema</div>
+          <% navSystem.forEach((item) => { %>
+            <a href="<%= item.href %>" <%- current === item.key ? 'aria-current="page"' : '' %>><%- icon(item.icon) %><span><%= item.label %></span></a>
+          <% }) %>
+        </div>
+      </nav>
+      <div class="sidebar-foot">
+        <% if (typeof admin !== 'undefined' && admin) { %>
+          <div class="sidebar-user">Conectado como<strong><%= admin.username %></strong></div>
+        <% } %>
+        <form action="/admin/logout" method="post">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button class="btn btn-secondary btn-sm btn-block" type="submit"><%- icon('logout') %> Sair</button>
+        </form>
+      </div>
+    </aside>
+    <main class="admin-main" id="conteudo">
+      <% if (typeof flash !== 'undefined' && flash) { %>
+        <div class="flash-area">
+          <div class="alert alert-<%= flash.type === 'error' ? 'error' : 'success' %>" role="<%= flash.type === 'error' ? 'alert' : 'status' %>">
+            <%- icon(flash.type === 'error' ? 'alert' : 'check') %><div><%= flash.message %></div>
+          </div>
+        </div>
+      <% } %>

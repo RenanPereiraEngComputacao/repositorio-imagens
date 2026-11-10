@@ -1,41 +1,68 @@
-<%- include('../../partials/admin-head', { title, page: 'products' }) %>
-<section class="panel narrow">
-  <% if (typeof error !== 'undefined') { %>
-    <div class="flash error"><%= error %></div>
+<%- include('../../partials/admin/start') %>
+<header class="page-head">
+  <div>
+    <a class="back-link" href="<%= product.id ? `/admin/products/${product.id}/images` : '/admin/products' %>"><%- icon('arrow-left') %> <%= product.id ? product.reference : 'Produtos' %></a>
+    <h1><%= title %></h1>
+  </div>
+</header>
+
+<div class="stack card-narrow">
+  <section class="card">
+    <form class="card-body form-stack" action="<%= action %>" method="post" novalidate>
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <% if (typeof error !== 'undefined' && error) { %>
+        <div class="alert alert-error" role="alert"><%- icon('alert') %><div><%= error %></div></div>
+      <% } %>
+      <div class="form-grid">
+        <label class="field">
+          <span>Referência</span>
+          <input class="input input-mono" name="reference" value="<%= product.reference || '' %>" placeholder="217.0010VT" maxlength="120" pattern="[A-Za-z0-9][A-Za-z0-9._\-]*" required>
+          <% if (product.id) { %><span class="field-hint">Alterar a referência muda o endereço público (QR Codes já impressos apontam para a referência atual).</span><% } %>
+        </label>
+        <label class="field">
+          <span>Coleção</span>
+          <select class="select" name="collection_id" required>
+            <option value="">Selecione</option>
+            <% collections.forEach((collection) => { %>
+              <option value="<%= collection.id %>" <%= String(product.collection_id || '') === String(collection.id) ? 'selected' : '' %>><%= collection.name %><%= collection.active ? '' : ' (inativa)' %></option>
+            <% }) %>
+          </select>
+        </label>
+      </div>
+      <label class="field">
+        <span>Nome do produto</span>
+        <input class="input" name="name" value="<%= product.name || '' %>" maxlength="180" placeholder="Vestido festa com laço">
+      </label>
+      <label class="field">
+        <span>Descrição / cores</span>
+        <textarea class="textarea" name="description" rows="4" maxlength="5000" placeholder="Rosa bebê; azul claro"><%= product.description || '' %></textarea>
+      </label>
+      <label class="check">
+        <input type="checkbox" name="active" <%= product.active ? 'checked' : '' %>>
+        <span>Produto ativo (página pública disponível)</span>
+      </label>
+      <div class="form-actions">
+        <a class="btn btn-ghost" href="<%= product.id ? `/admin/products/${product.id}/images` : '/admin/products' %>">Cancelar</a>
+        <button class="btn btn-primary" type="submit">Salvar</button>
+      </div>
+    </form>
+  </section>
+
+  <% if (product.id) { %>
+    <section class="card danger-zone">
+      <div class="card-head"><h2>Excluir produto</h2></div>
+      <form class="card-body form-stack" action="/admin/products/<%= product.id %>/excluir" method="post" autocomplete="off">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <p class="muted">Remove o produto e todas as suas imagens. A página pública deixa de funcionar. O conteúdo vai para a lixeira e pode ser restaurado.</p>
+        <label class="field">
+          <span>Digite a referência <span class="phrase"><%= product.reference %></span> para confirmar</span>
+          <input class="input input-mono" name="confirm_reference" required autocomplete="off" spellcheck="false">
+        </label>
+        <div class="form-actions">
+          <button class="btn btn-danger-outline" type="submit" data-confirm="Excluir o produto <%= product.reference %> e todas as imagens?"><%- icon('trash') %> Excluir produto</button>
+        </div>
+      </form>
+    </section>
   <% } %>
-  <form class="stacked-form" action="<%= action %>" method="post">
-    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-    <label>
-      Referência
-      <input name="reference" value="<%= product.reference || '' %>" placeholder="217.0010VT" required>
-    </label>
-    <label>
-      Nome do produto
-      <input name="name" value="<%= product.name || '' %>">
-    </label>
-    <label>
-      Descrição
-      <textarea name="description" rows="4"><%= product.description || '' %></textarea>
-    </label>
-    <label>
-      Coleção
-      <select name="collection_id" required>
-        <option value="">Selecione</option>
-        <% collections.forEach((collection) => { %>
-          <option value="<%= collection.id %>" <%= String(product.collection_id || '') === String(collection.id) ? 'selected' : '' %>>
-            <%= collection.name %> <%= collection.active ? '' : '(inativa)' %>
-          </option>
-        <% }) %>
-      </select>
-    </label>
-    <label class="switch-row">
-      <input type="checkbox" name="active" <%= product.active ? 'checked' : '' %>>
-      <span>Ativo</span>
-    </label>
-    <div class="form-actions">
-      <a class="ghost-button" href="/admin/products">Cancelar</a>
-      <button class="primary-button" type="submit">Salvar</button>
-    </div>
-  </form>
-</section>
-<%- include('../../partials/admin-footer') %>
+</div>
+<%- include('../../partials/admin/end') %>

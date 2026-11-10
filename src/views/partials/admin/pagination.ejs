@@ -1,0 +1,11 @@
+<% if (pagination.pages > 1) { %>
+  <nav class="pagination" aria-label="Paginação">
+    <% if (pagination.prev) { %><a href="<%= pagination.prev %>" aria-label="Página anterior"><%- icon('chevron-left') %></a><% } %>
+    <% if (pagination.first) { %><a href="<%= pagination.first %>">1</a><span aria-hidden="true">…</span><% } %>
+    <% pagination.links.forEach((link) => { %>
+      <% if (link.current) { %><span aria-current="page"><%= link.number %></span><% } else { %><a href="<%= link.href %>"><%= link.number %></a><% } %>
+    <% }) %>
+    <% if (pagination.last) { %><span aria-hidden="true">…</span><a href="<%= pagination.last %>"><%= pagination.pages %></a><% } %>
+    <% if (pagination.next) { %><a href="<%= pagination.next %>" aria-label="Próxima página"><%- icon('chevron-right') %></a><% } %>
+  </nav>
+<% } %>

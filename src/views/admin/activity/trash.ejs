@@ -1,0 +1,49 @@
+<%- include('../../partials/admin/start') %>
+<%
+  const typeLabel = { collection: 'Coleção', product: 'Produto', image: 'Imagem' };
+  const statusLabel = { trashed: 'Na lixeira', restored: 'Restaurado', purged: 'Purgado' };
+%>
+<header class="page-head">
+  <div>
+    <p class="eyebrow">Recuperação</p>
+    <h1><%= title %></h1>
+  </div>
+</header>
+
+<div class="alert alert-info flash-area">
+  <%- icon('restore') %>
+  <div>Itens excluídos ficam guardados fora da área pública. Restaurar devolve os registros e os arquivos aos mesmos endereços — links e QR Codes voltam a funcionar. A purga definitiva é feita pelo servidor (<code>npm run trash:purge</code>).</div>
+</div>
+
+<section class="card">
+  <% if (entries.length) { %>
+    <div class="table-wrap">
+      <table class="table">
+        <thead><tr><th class="num">#</th><th>Item</th><th class="num hide-sm">Produtos</th><th class="num hide-sm">Imagens</th><th class="hide-sm">Excluído em</th><th>Status</th><th><span class="sr-only">Ações</span></th></tr></thead>
+        <tbody>
+          <% entries.forEach((entry) => { %>
+            <tr>
+              <td class="num"><%= entry.id %></td>
+              <td><strong class="small"><%= typeLabel[entry.entity_type] || entry.entity_type %></strong><span class="cell-sub"><%= entry.label %></span></td>
+              <td class="num hide-sm"><%= entry.products_count %></td>
+              <td class="num hide-sm"><%= entry.images_count %><% if (Number(entry.bytes_total)) { %> <span class="muted small">(<%= formatBytes(entry.bytes_total) %>)</span><% } %></td>
+              <td class="hide-sm small"><%= formatDate(entry.created_at) %><span class="cell-sub">por <%= entry.created_by %></span></td>
+              <td><span class="badge <%= entry.status === 'trashed' ? 'badge-warning' : 'badge-off' %>"><%= statusLabel[entry.status] || entry.status %></span></td>
+              <td>
+                <% if (entry.status === 'trashed') { %>
+                  <form class="table-actions" action="/admin/lixeira/<%= entry.id %>/restaurar" method="post">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <button class="btn btn-secondary btn-sm" type="submit" data-confirm="Restaurar “<%= entry.label %>”?" data-confirm-title="Restaurar item" data-confirm-tone="neutral"><%- icon('restore') %> Restaurar</button>
+                  </form>
+                <% } %>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } else { %>
+    <div class="empty"><%- icon('trash') %><h2>Lixeira vazia</h2><p>Nada foi excluído até agora.</p></div>
+  <% } %>
+</section>
+<%- include('../../partials/admin/end') %>

@@ -3,16 +3,19 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title><%= title %> | Stylezee</title>
+  <meta name="robots" content="noindex">
+  <title><%= title %> · <%= brand %></title>
   <link rel="stylesheet" href="/assets/styles.css">
 </head>
 <body class="public-body">
-  <main class="not-found-public">
-    <div class="brand-line">
-      <span class="brand-mark">S</span>
-      <strong>Stylezee</strong>
-    </div>
-    <h1>Imagens não encontradas para esta referência.</h1>
+  <header class="public-header"><span class="wordmark"><%= brand %></span></header>
+  <main class="public-main">
+    <section class="not-found">
+      <p class="eyebrow">Referência indisponível</p>
+      <h1>Imagens não encontradas para esta referência.</h1>
+      <p>Confira o código na etiqueta ou entre em contato com seu representante <%= brand %>.</p>
+    </section>
   </main>
+  <footer class="public-footer"><%= brand %> · Imagens oficiais</footer>
 </body>
 </html>

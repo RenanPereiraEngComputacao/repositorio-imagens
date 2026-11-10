@@ -3,32 +3,37 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title><%= title %> | Stylezee Imagens</title>
+  <meta name="robots" content="noindex, nofollow">
+  <title><%= title %> · <%= brand %> Imagens</title>
   <link rel="stylesheet" href="/assets/styles.css">
 </head>
 <body class="login-body">
-  <main class="login-panel">
-    <div class="login-brand">
-      <span class="brand-mark">S</span>
-      <div>
-        <strong>Stylezee</strong>
-        <small>Repositório de imagens</small>
-      </div>
+  <section class="login-visual" aria-hidden="true">
+    <div>
+      <span class="wordmark"><%= brand %></span>
+      <span class="wordmark-sub">Acervo de imagens</span>
     </div>
-    <form class="form-panel" action="/admin/login" method="post">
+    <p class="login-quote">Cada peça, com a imagem que ela merece.</p>
+  </section>
+  <main class="login-panel">
+    <form class="login-form" action="/admin/login" method="post">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-      <% if (typeof error !== 'undefined') { %>
-        <div class="flash error"><%= error %></div>
+      <div>
+        <p class="eyebrow">Área restrita</p>
+        <h1>Entrar no painel</h1>
+      </div>
+      <% if (typeof error !== 'undefined' && error) { %>
+        <div class="alert alert-error" role="alert"><%- icon('alert') %><div><%= error %></div></div>
       <% } %>
-      <label>
-        Usuário
-        <input name="username" autocomplete="username" required>
+      <label class="field">
+        <span>Usuário</span>
+        <input class="input" name="username" autocomplete="username" value="<%= typeof username !== 'undefined' ? username : '' %>" required autofocus>
       </label>
-      <label>
-        Senha
-        <input name="password" type="password" autocomplete="current-password" required>
+      <label class="field">
+        <span>Senha</span>
+        <input class="input" name="password" type="password" autocomplete="current-password" required>
       </label>
-      <button class="primary-button full" type="submit">Entrar</button>
+      <button class="btn btn-primary btn-block" type="submit">Entrar</button>
     </form>
   </main>
 </body>
